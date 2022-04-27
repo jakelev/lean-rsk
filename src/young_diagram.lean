@@ -20,9 +20,8 @@ def young_diagram.nw_of (μ : young_diagram)
 instance young_diagram.has_subset : has_subset young_diagram :=
 { subset := λ μ ν, μ.cells ⊆ ν.cells }
 instance young_diagram.has_emptyc : has_emptyc young_diagram :=
-{ emptyc :=
-  { cells := finset.empty,
-    nw_of' := λ _ _ _ _ _ _ h, h, } }
+{ emptyc := { cells := finset.empty, nw_of' := λ _ _ _ _ _ _ h, h, } }
+
 def μ_empty := (∅ : young_diagram)
 
 def young_diagram.row (μ : young_diagram) (i : ℕ) := μ.cells.filter (λ c, c.fst = i)
@@ -49,7 +48,7 @@ lemma young_diagram.row_def' (μ : young_diagram) (i : ℕ) :
 begin
   by_cases (μ.row i).nonempty, rotate,
   { rw finset.not_nonempty_iff_eq_empty at h,
-  rw [young_diagram.row_len, h, 
+    rw [young_diagram.row_len, h, 
       finset.card_empty, finset.range_zero, finset.product_empty], },
 
   have key : ∀ b : ℕ, (i, b) ∈ μ → 
@@ -67,6 +66,7 @@ begin
       change b = _ at h', subst b, exact hj',
       intro h, use (i, j), rw young_diagram.mem_row_iff,
       exact ⟨⟨h, rfl⟩, rfl⟩, },
+
     set j := ((μ.row i).image prod.snd).max' (h.image _) with hj,
 
     have : μ.row i = finset.product {i} (finset.range j.succ),
@@ -93,7 +93,6 @@ begin
   rw and_iff_right, refl,
   rw [young_diagram.row_def, finset.mem_filter, and_iff_left rfl], refl,
 end
-
 
 -- lemma young_diagram.row_not_cell (μ : young_diagram) (i : ℕ) : (i, μ.row_len i) ∉ μ :=
 -- begin
@@ -168,6 +167,8 @@ end
 --   unfold young_diagram.row, 
 --   rw [finset.mem_filter, and_iff_left rfl], refl,
 -- end
+
+section of_row_lens
 
 def list_decr : list ℕ → Prop
 | [] := true
@@ -264,12 +265,20 @@ def young_diagram.of_row_lens (r : list ℕ) (h : list_decr r) : young_diagram :
     apply list_decr_iff.mp h, exact hi,
   end,}
 
+end of_row_lens
+
+section repr
+
 def young_diagram.repr (μ : young_diagram) : string := μ.row_lens.to_string
 def young_diagram.repr' (μ : young_diagram) : string :=
   string.intercalate "\n"
     (μ.repr :: (list.map (λ i : ℕ, string.join (list.repeat "□" i)) μ.row_lens))
 instance young_diagram.has_repr : has_repr young_diagram :=
 { repr := young_diagram.repr' }
+
+end repr
+
+section corners
 
 structure young_diagram.inner_corner (μ : young_diagram) :=
   (i j : ℕ)
@@ -315,22 +324,12 @@ young_diagram :=
   end,
 }
 
+end corners
+
 @[simp]
 def μ5331 : young_diagram := 
   young_diagram.of_row_lens [5, 3, 3, 1] (by {unfold list_decr, dec_trivial})
 
--- def test : μ5331.inner_corner (2, 2) :=
 
-
-/-
-To define:
-
-size, row_len, col_len
-transpose
-inner_corner, outer_corner
-
-toString
-
--/
 
 end young_diagram
