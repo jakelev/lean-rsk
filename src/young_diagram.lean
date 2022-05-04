@@ -65,13 +65,13 @@ begin
 end
 
 def young_diagram.row_len (μ : young_diagram) (i : ℕ) : ℕ := 
-  nat.find (μ.row_len_aux i)
+  nat.find $ μ.row_len_aux i
 def young_diagram.col_len (μ : young_diagram) (j : ℕ) : ℕ := 
-  nat.find (μ.col_len_aux j)
+  nat.find $ μ.col_len_aux j
 def young_diagram.row_lens (μ : young_diagram) : list ℕ := 
-  list.map μ.row_len (list.range (μ.col_len 0))
+  list.map μ.row_len (list.range $ μ.col_len 0)
 def young_diagram.col_lens (μ : young_diagram) : list ℕ := 
-  list.map μ.col_len (list.range (μ.row_len 0))
+  list.map μ.col_len (list.range $ μ.row_len 0)
 
 lemma young_diagram.row_len_def (μ : young_diagram) {i : ℕ} :
   μ.row_len i = nat.find (μ.row_len_aux i) := rfl
@@ -96,7 +96,7 @@ begin
 end
 
 lemma young_diagram.row_eq_prod_range (μ : young_diagram) {i : ℕ} :
-  μ.row i = finset.product {i} (finset.range (μ.row_len i)) :=
+  μ.row i = finset.product {i} (finset.range $ μ.row_len i) :=
 begin
   ext ⟨a, b⟩,
   rw [finset.mem_product, finset.mem_singleton, finset.mem_range,
@@ -105,7 +105,7 @@ begin
   rintro rfl, refl,
 end
 lemma young_diagram.col_eq_prod_range (μ : young_diagram) {j : ℕ} :
-  μ.col j = finset.product (finset.range (μ.col_len j)) {j} :=
+  μ.col j = finset.product (finset.range $ μ.col_len j) {j} :=
 begin
   ext ⟨a, b⟩,
   rw [finset.mem_product, finset.mem_singleton, finset.mem_range,
@@ -140,7 +140,7 @@ lemma list_decr_iff :
 | [x] := begin apply (true_iff _).mpr, intros n n' h,
                cases n', rw nat.le_zero_iff.mp h, exact nat.zero_le _, end
 | (x :: y :: xs) := begin
-  unfold list_decr, rw list_decr_iff, dsimp,
+  unfold list_decr, rw list_decr_iff, dsimp only [list.inth],
   split,
   { rintros ⟨h, h'⟩ n n' hn, 
     cases n', rw nat.le_zero_iff at hn, subst n,
@@ -157,13 +157,13 @@ end
 def young_diagram.cells_of_row_lens (w : list ℕ) : finset (ℕ × ℕ) :=
   finset.bUnion 
     (finset.range w.length)
-    (λ i, ({i} : finset ℕ).product (finset.range (w.inth i)))
+    (λ i, ({i} : finset ℕ).product (finset.range $ w.inth i))
 
 lemma young_diagram.mem_of_row_lens (w : list ℕ) (c : ℕ × ℕ):
   c ∈ young_diagram.cells_of_row_lens w ↔ c.snd < w.inth c.fst :=
 begin
   unfold young_diagram.cells_of_row_lens,
-  rw finset.mem_bUnion, dsimp,
+  rw finset.mem_bUnion, dsimp only [list.inth],
   split; intro h,
   { obtain ⟨a, h, h'⟩ := h,
     rw finset.mem_product at h',
@@ -201,8 +201,8 @@ section repr
 
 def young_diagram.repr (μ : young_diagram) : string := μ.row_lens.to_string
 def young_diagram.repr' (μ : young_diagram) : string :=
-  string.intercalate "\n"
-    (μ.repr :: (list.map (λ i : ℕ, string.join (list.repeat "□" i)) μ.row_lens))
+  string.intercalate "\n" $
+    μ.repr :: (list.map (λ i, string.join $ list.repeat "□" i) μ.row_lens)
 instance young_diagram.has_repr : has_repr young_diagram :=
 { repr := young_diagram.repr' }
 
@@ -225,14 +225,14 @@ structure young_diagram.outer_corner (μ : young_diagram) :=
 instance young_diagram.dec_cell_right (μ : young_diagram)
   (i j : ℕ) : decidable (∀ {j'}, j < j' → (i, j') ∉ μ) :=
 if hj : j.succ < μ.row_len i
-then is_false (λ h', h' (lt_add_one j) (μ.mem_row_iff'.mpr hj))
-else is_true (λ j' h' hcell, hj (μ.mem_row_iff'.mp (μ.nw_of (le_refl _) h' hcell)))
+then is_false $ λ h', h' (lt_add_one j) (μ.mem_row_iff'.mpr hj)
+else is_true $ λ j' h' hcell, hj (μ.mem_row_iff'.mp $ μ.nw_of (le_refl _) h' hcell)
 
 instance young_diagram.dec_cell_down (μ : young_diagram)
   (i j : ℕ) : decidable (∀ {i'}, i < i' → (i', j) ∉ μ) :=
 if hi : i.succ < μ.col_len j
-then is_false (λ h', h' (lt_add_one i) (μ.mem_col_iff'.mpr hi))
-else is_true (λ j' h' hcell, hi (μ.mem_col_iff'.mp (μ.nw_of h' (le_refl _) hcell)))
+then is_false $ λ h', h' (lt_add_one i) (μ.mem_col_iff'.mpr hi)
+else is_true $ λ j' h' hcell, hi (μ.mem_col_iff'.mp $ μ.nw_of h' (le_refl _) hcell)
 
 -- presumably easier because they only involve finitely-many values of j'
 instance young_diagram.dec_cell_left (μ : young_diagram)
@@ -265,6 +265,10 @@ c.del.cells = μ.cells.erase (c.i, c.j) := rfl
   {μ : young_diagram} (c : μ.inner_corner) {i j : ℕ} : 
 (i, j) ∈ c.del ↔ (i, j) ≠ (c.i, c.j) ∧ (i, j) ∈ μ := finset.mem_erase
 
+lemma young_diagram.inner_corner.del_size
+  {μ : young_diagram} (c : μ.inner_corner) : 
+  c.del.size + 1 = μ.size := finset.card_erase_add_one c.cell
+
 def young_diagram.outer_corner.add {μ : young_diagram} (c : μ.outer_corner) : 
 young_diagram :=
 { cells := insert (c.i, c.j) μ.cells,
@@ -288,6 +292,10 @@ c.add.cells = insert (c.i, c.j) μ.cells := rfl
 @[simp] lemma young_diagram.outer_corner.mem_add
   {μ : young_diagram} (c : μ.outer_corner) {i j : ℕ} : 
 (i, j) ∈ c.add ↔ (i, j) = (c.i, c.j) ∨ (i, j) ∈ μ := finset.mem_insert
+
+lemma young_diagram.outer_corner.add_size
+  {μ : young_diagram} (c : μ.outer_corner) : 
+  c.add.size = μ.size + 1 := finset.card_insert_of_not_mem c.not_cell
 
 def young_diagram.inner_corner.to_outer
   {μ : young_diagram} (c : μ.inner_corner) : c.del.outer_corner :=
@@ -374,11 +382,11 @@ def μ5331.corner2 : μ5331.inner_corner :=
   --   sorry,
   -- end,
   λ j', begin
-    contrapose!, dsimp, rw young_diagram.of_row_lens.mem,
+    contrapose!, dsimp only [μ5331], rw young_diagram.of_row_lens.mem,
     exact λ h, nat.lt_succ_iff.mp h,
   end,
   cell_down := λ i', begin
-    dsimp, rw [young_diagram.of_row_lens.mem, list.inth],
+    dsimp only [μ5331], rw [young_diagram.of_row_lens.mem, list.inth],
     contrapose!, intro h,
 
     -- beginning of μ

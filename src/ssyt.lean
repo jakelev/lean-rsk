@@ -63,13 +63,13 @@ def ssyt_bounded.to_ssyt'_bounded {μ : young_diagram} {m : ℕ}
     λ c c' hi hj, begin
     cases c with c hc, cases c with i1 j1,
     cases c' with c' hc', cases c' with i2 j2,
-    dsimp at *, subst i2,
+    dsimp only at *, subst i2,
     apply TT.val.row_weak hj hc',
   end,
   λ c c' hi hj, begin
     cases c with c hc, cases c with i1 j1,
     cases c' with c' hc', cases c' with i2 j2,
-    dsimp at *, subst j2,
+    dsimp only at *, subst j2,
     apply TT.val.col_strict hi hc',
   end⟩
 }
@@ -220,7 +220,7 @@ begin
   ext ⟨i, j⟩,
   rw [ssyt.mem_strip, young_diagram.outer_corner.mem_add, ssyt.legal.entry_add],
   split_ifs; try {rw finset.mem_insert}; rw ssyt.mem_strip,
-  { cases h_1, cases h_2, 
+  { cases h_1, cases h_2,
     simp only [not_cell, or_false, eq_self_iff_true, and_true, false_and, iff_true],
     refl, },
   { cases h_1, simp only [not_cell, ne.symm h_2, and_false, false_and] },
@@ -271,7 +271,7 @@ end
 -- new strip of k's + (box if T h.i h.j = k) = 
 -- (old strip of k's) + (box if h.val = k)
 
-def ssyt.wt_replace {μ : young_diagram} (T : ssyt μ) (val : ℕ)
+lemma ssyt.wt_replace {μ : young_diagram} (T : ssyt μ) (val : ℕ)
   (h : T.legal) (cell : (h.i, h.j) ∈ μ) :
   (h.replace cell).wt val + ite (val = T h.i h.j) 1 0 =
   T.wt val + ite (val = h.val) 1 0 :=
@@ -292,3 +292,38 @@ begin
 end
 
 end weight
+
+-- example {μ : young_diagram} (T : ssyt μ) {i : ℕ} : string :=
+--   string.intercalate ", " 
+--     (list.map (λ j, (T i j).repr) (list.range (μ.row_len i))
+
+section repr
+
+def ssyt.repr {μ : young_diagram} (T : ssyt μ) : string :=
+string.intercalate "\n" $
+  ("shape: " ++ μ.repr) :: 
+    list.map (λ i, string.intercalate ", " $
+      list.map (λ j, (T i j).repr) (list.range $ μ.row_len i))
+        (list.range $ μ.col_len 0)
+
+instance ssyt.has_repr {μ : young_diagram} : has_repr (ssyt μ) :=
+{ repr := ssyt.repr }
+
+end repr
+
+section examples
+
+@[simp] def young_diagram.highest_ssyt (μ : young_diagram) : ssyt μ :=
+{ entry := λ i j, ite ((i, j) ∈ μ) i 0,
+  row_weak := λ i j1 j2 hj hcell, begin
+    rw if_pos hcell, rw if_pos (μ.nw_of (le_refl _) (le_of_lt hj) hcell),
+  end,
+  col_strict := λ i1 i2 j hi hcell, begin
+    rw if_pos hcell, rwa if_pos (μ.nw_of (le_of_lt hi) (le_refl _) hcell),
+  end,
+  zeros' := λ i j hij, by rw if_neg hij,
+}
+
+#eval μ5331.highest_ssyt
+
+end examples
