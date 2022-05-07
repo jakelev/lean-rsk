@@ -126,6 +126,24 @@ begin
   rw [finset.card_product, finset.card_singleton, finset.card_range, mul_one],
 end
 
+lemma young_diagram.row_len_decr (μ : young_diagram) {i1 i2 : ℕ} (hi : i1 ≤ i2) :
+  μ.row_len i2 ≤ μ.row_len i1 :=
+begin
+  by_contra h_lt, push_neg at h_lt,
+  have := μ.nw_of hi (le_refl _),
+  rw [μ.mem_row_iff', μ.mem_row_iff'] at this,
+  exact (lt_self_iff_false _).mp (this h_lt),
+end
+
+lemma young_diagram.col_len_decr (μ : young_diagram) {j1 j2 : ℕ} (hj : j1 ≤ j2) :
+  μ.col_len j2 ≤ μ.col_len j1 :=
+begin
+  by_contra h_lt, push_neg at h_lt,
+  have := μ.nw_of (le_refl _) hj,
+  rw [μ.mem_col_iff', μ.mem_col_iff'] at this,
+  exact (lt_self_iff_false _).mp (this h_lt),
+end
+
 section of_row_lens
 
 def list_decr : list ℕ → Prop

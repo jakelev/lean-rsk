@@ -324,6 +324,21 @@ section examples
   zeros' := λ i j hij, by rw if_neg hij,
 }
 
-#eval μ5331.highest_ssyt
+-- if μ.col_len j = i then μ.col_len 0, otherwise increasing with i
+-- i + μ.col_len 0 - μ.col_len j
+def young_diagram.lowest_ssyt (μ : young_diagram) : ssyt μ :=
+{ entry := λ i j, ite ((i, j) ∈ μ) (i + μ.col_len 0 - μ.col_len j) 0,
+  row_weak := λ i j1 j2 hj hcell, begin
+    rw [if_pos hcell, if_pos (μ.nw_of (le_refl _) (le_of_lt hj) hcell)],
+    apply nat.sub_le_sub_left,
+    apply young_diagram.col_len_decr,
+    exact le_of_lt hj,
+  end,
+  col_strict := λ i1 i2 j hi hcell, begin
+    rw [if_pos hcell, if_pos (μ.nw_of (le_of_lt hi) (le_refl _) hcell)],
+    apply nat.sub_mono_left_strict _ (add_lt_add_right hi _),
+    exact (μ.col_len_decr (nat.zero_le j)).trans le_add_self,
+  end
+}
 
 end examples
