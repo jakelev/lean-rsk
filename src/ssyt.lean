@@ -338,7 +338,8 @@ def young_diagram.lowest_ssyt (μ : young_diagram) : ssyt μ :=
     rw [if_pos hcell, if_pos (μ.nw_of (le_of_lt hi) (le_refl _) hcell)],
     apply nat.sub_mono_left_strict _ (add_lt_add_right hi _),
     exact (μ.col_len_decr (nat.zero_le j)).trans le_add_self,
-  end
+  end,
+  zeros' := λ i j not_cell, by rw if_neg not_cell
 }
 
 end examples

@@ -116,6 +116,198 @@ lemma ssyt.rbs_cert.rbwf_eq_self_lt_initial_row {μ : young_diagram} :
   end)
 using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
 
+lemma ssyt.rbs_cert.rbwf_corner_eq_of_eq_ge_initial_row {μ ν : young_diagram} :
+Π {T : ssyt μ} (h : T.rbs_cert) {T' : ssyt ν} (h' : T'.rbs_cert)
+  (hi : h'.i = h.i) (hval : h'.val = h.val)
+  (eq_cell_ge : ∀ i j (hi' : h.i ≤ i), (i, j) ∈ μ ↔ (i, j) ∈ ν)
+  (eq_row_ge : ∀ i j (hi' : h.i ≤ i), T i j = T' i j),
+h'.rbwf.1.i = h.rbwf.1.i ∧ h'.rbwf.1.j = h.rbwf.1.j
+| T h := λ T' h' hi hval eq_cell_ge eq_row_ge, 
+  have hj : h'.j = h.j := by {
+    rw [ssyt.rbs_cert.j, ssyt.rbs_cert.j, hi, hval,
+        T.rbc_eq_of_eq_row T' (λ j, eq_cell_ge _ j (by refl)) (λ j, eq_row_ge _ j (by refl))] },
+  dite ((h.i, h.j) ∈ μ)
+  (λ cell, 
+    have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
+    begin
+      have cell' : (h'.i, h'.j) ∈ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+      rw [h.rbwf_of_cell cell, h'.rbwf_of_cell cell'],
+      apply ssyt.rbs_cert.rbwf_corner_eq_of_eq_ge_initial_row,
+      change h'.i.succ = h.i.succ, rw hi,
+      change T' h'.i h'.j = T h.i h.j, rw [hi, hj, eq_row_ge _ _ (by refl)],
+      exact λ i j hi', eq_cell_ge _ _ (le_trans h.i.le_succ hi'),
+      intros i j hi',
+        rw [h'.rbs_entry, hi, hj, hval, ← eq_row_ge _ _ (le_trans h.i.le_succ hi')], refl,
+    end)
+  (λ not_cell, begin
+    have not_cell' : (h'.i, h'.j) ∉ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+    rw [h.rbwf_of_not_cell not_cell, h'.rbwf_of_not_cell not_cell'],
+    exact ⟨hi, hj⟩,
+  end)
+using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
+
+lemma ssyt.rbs_cert.rbwf_shape_eq_of_eq_ge_initial_row {μ ν : young_diagram}
+  {T : ssyt μ} (h : T.rbs_cert) {T' : ssyt ν} (h' : T'.rbs_cert)
+  (hi : h'.i = h.i) (hval : h'.val = h.val)
+  (eq_cell_ge : ∀ i j (hi' : h.i ≤ i), (i, j) ∈ μ ↔ (i, j) ∈ ν)
+  (eq_row_ge : ∀ i j (hi' : h.i ≤ i), T i j = T' i j)
+  (i j : ℕ) (hi' : h.i ≤ i) :
+  (i, j) ∈ h.rbwf.1.add ↔ (i, j) ∈ h'.rbwf.1.add :=
+begin
+  rw [young_diagram.outer_corner.mem_add, young_diagram.outer_corner.mem_add],
+  obtain ⟨rwi, rwj⟩ := h.rbwf_corner_eq_of_eq_ge_initial_row h' hi hval eq_cell_ge eq_row_ge,
+  rw [rwi, rwj, ← eq_cell_ge _ _ hi'],
+end
+
+
+-- lemma ssyt.rbs_cert.rbwf_shape_eq_of_eq_ge_initial_row {μ ν : young_diagram} :
+-- Π {T : ssyt μ} (h : T.rbs_cert) {T' : ssyt ν} (h' : T'.rbs_cert)
+--   (hi : h'.i = h.i) (hval : h'.val = h.val)
+--   (eq_cell_ge : ∀ i j (hi' : h.i ≤ i), (i, j) ∈ μ ↔ (i, j) ∈ ν)
+--   (eq_row_ge : ∀ i j (hi' : h.i ≤ i), T i j = T' i j)
+--   (i j : ℕ) (hi' : h.i ≤ i),
+--   (i, j) ∈ h.rbwf.1.add ↔ (i, j) ∈ h'.rbwf.1.add
+-- | T h := λ T' h' hi hval eq_cell_ge eq_row_ge i j hi', dite ((h.i, h.j) ∈ μ)
+--   (λ cell, 
+--     have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
+--     begin
+--     have hj : h'.j = h.j,
+--       repeat {rw ssyt.rbs_cert.j},
+--       rw [T'.rbc_eq_of_eq_row T, hi, hval],
+--       intro j, rw eq_cell_ge, rw hi,
+--       intro j, rw eq_row_ge, rw hi,
+--     have cell' : (h'.i, h'.j) ∈ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+--     rw [h.rbwf_of_cell cell, h'.rbwf_of_cell cell'],
+--     cases eq_or_lt_of_le hi', 
+--     { subst i,
+--       rw [ssyt.rbs_cert.rbwf_shape_eq_self_lt_initial_row,
+--           ssyt.rbs_cert.rbwf_shape_eq_self_lt_initial_row,
+--           eq_cell_ge _ _ (by refl)],
+--       rw ← hi, exact lt_add_one _, exact lt_add_one _ },
+--     { rw ssyt.rbs_cert.rbwf_shape_eq_of_eq_ge_initial_row,
+--       change h'.i.succ = h.i.succ, rw hi,
+--       change T' h'.i h'.j = T h.i h.j, rw [hi, hj, eq_row_ge _ _ (by refl)],
+--       intros i j hi', rw eq_cell_ge _ _ (le_trans h.i.le_succ hi'),
+--       intros i j hi',
+--         rw [h'.rbs_entry, hi, hj, hval, ← eq_row_ge _ _ (le_trans h.i.le_succ hi')], refl,
+--       exact nat.succ_le_iff.mpr h_1, },
+--     end)
+--   (λ not_cell, begin
+--     have hj : h'.j = h.j,
+--       repeat {rw ssyt.rbs_cert.j},
+--       rw [T'.rbc_eq_of_eq_row T, hi, hval],
+--       intro j, rw eq_cell_ge, rw hi,
+--       intro j, rw eq_row_ge, rw hi,
+--     have not_cell' : (h'.i, h'.j) ∉ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+--     rw [h.rbwf_of_not_cell not_cell, h'.rbwf_of_not_cell not_cell'],
+--     repeat {rw young_diagram.outer_corner.mem_add},
+--     change _ = (h.i, h.j) ∨ _ ↔ _ = (h'.i, h'.j) ∨ _,
+--     rw [eq_cell_ge _ _ hi', hi, hj],
+--   end)
+-- using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
+
+lemma ssyt.rbs_cert.rbwf_eq_of_eq_ge_initial_row {μ ν : young_diagram} :
+Π {T : ssyt μ} (h : T.rbs_cert) {T' : ssyt ν} (h' : T'.rbs_cert)
+  (hi : h'.i = h.i) (hval : h'.val = h.val)
+  (eq_cell_ge : ∀ i j (hi' : h.i ≤ i), (i, j) ∈ μ ↔ (i, j) ∈ ν)
+  (eq_row_ge : ∀ i j (hi' : h.i ≤ i), T i j = T' i j)
+  (i j : ℕ) (hi' : h.i ≤ i),
+  h.rbwf.2 i j = h'.rbwf.2 i j
+| T h := λ T' h' hi hval eq_cell_ge eq_row_ge i j hi',
+  have hj : h'.j = h.j := by {
+    rw [ssyt.rbs_cert.j, ssyt.rbs_cert.j, hi, hval,
+        T.rbc_eq_of_eq_row T' (λ j, eq_cell_ge _ j (by refl)) (λ j, eq_row_ge _ j (by refl))] },
+  dite ((h.i, h.j) ∈ μ)
+  (λ cell, 
+    have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
+    begin
+      have cell' : (h'.i, h'.j) ∈ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+      rw [h.rbwf_of_cell cell, h'.rbwf_of_cell cell'],
+      cases eq_or_lt_of_le hi', 
+      { subst i,
+        repeat {rw ssyt.rbs_cert.rbwf_eq_self_lt_initial_row},
+        rw [h'.rbs_entry, hi, hj, hval, ← eq_row_ge _ _ (by refl)], refl,
+        rw ← hi, exact lt_add_one _, exact lt_add_one _ },
+      { rw ssyt.rbs_cert.rbwf_eq_of_eq_ge_initial_row,
+        exact congr_arg nat.succ hi,
+        change T' h'.i h'.j = T h.i h.j, rw [hi, hj, eq_row_ge _ _ (by refl)],
+        exact λ i j hi', eq_cell_ge _ _ (le_trans h.i.le_succ hi'),
+        intros i j hi',
+          rw [h'.rbs_entry, hi, hj, hval, ← eq_row_ge _ _ (le_trans h.i.le_succ hi')], refl,
+        exact nat.succ_le_iff.mpr h_1, },
+      end)
+  (λ not_cell, begin
+    have not_cell' : (h'.i, h'.j) ∉ ν := by rwa [hi, hj, ← eq_cell_ge _ _ (by refl)],
+    rw [h.rbwf_of_not_cell not_cell, h'.rbwf_of_not_cell not_cell'], dsimp,
+    rw [h'.rbs_end_entry not_cell', hi, hj, hval, ← eq_row_ge _ _ hi'], refl,
+  end)
+using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
+
+-- make this proof nicer lol
+lemma ssyt.rbs_cert.rbwf_rbs_comm {μ : young_diagram}
+  {T : ssyt μ} (h h1 : T.rbs_cert) (cell1 : (h1.i, h1.j) ∈ μ)
+  (h_h1_i : h1.i < h.i) 
+  (h' : (h1.rbs cell1).rbs_cert) (hi' : h'.i = h.i) (hval' : h'.val = h.val)
+  (h1' : h.rbwf.2.rbs_cert) (h1i' : h1'.i = h1.i) (h1val' : h1'.val = h1.val)
+  (cell1' : (h1'.i, h1'.j) ∈ h.rbwf.1.add) :
+  ∀ (i j : ℕ), h1'.rbs cell1' i j = h'.rbwf.2 i j :=
+begin
+  have hj : h'.j = h.j := by {
+    rw [ssyt.rbs_cert.j, ssyt.rbs_cert.j, hi', hval',
+        T.rbc_eq_of_eq_row _ (λ j, iff.rfl) (λ j, _)],
+    rw h1.rbs_entry_eq_of_ne_row, exact (ne_of_lt h_h1_i).symm, },
+  have h1j : h1'.j = h1.j := by {
+    rw [ssyt.rbs_cert.j, ssyt.rbs_cert.j, h1i', h1val',
+        h.rbwf.2.rbc_eq_of_eq_row T (λ j, _) (λ j, _)],
+    rw h.rbwf_shape_eq_self_lt_initial_row _ _ h_h1_i,
+    rw h.rbwf_eq_self_lt_initial_row _ _ h_h1_i },
+  have key_lt_hi : ∀ i j (hi : i < h.i), h1'.rbs cell1' i j = h'.rbwf.2 i j,
+  { intros i j hi,
+    rw h'.rbwf_eq_self_lt_initial_row i _ (hi'.symm ▸ hi),
+    rw [ssyt.rbs_cert.rbs_entry, ssyt.rbs_cert.rbs_entry, h1i', h1val', h1j],
+    rw h.rbwf_eq_self_lt_initial_row _ _ hi, },
+  have key_hi : ∀ j, h1'.rbs cell1' h.i j = h'.rbwf.2 h.i j,
+  { intro j,
+    rw h1'.rbs_entry_eq_of_ne_row, rotate, rw h1i', exact (ne_of_lt h_h1_i).symm,
+    rw ssyt.rbs_cert.rbwf, split_ifs,
+    { rw [dif_pos h_1, h'.rbwf_of_cell (by rwa [hi', hj])],
+      rw ssyt.rbs_cert.rbwf_eq_self_lt_initial_row,
+      rw ssyt.rbs_cert.rbwf_eq_self_lt_initial_row,
+      rw [h'.rbs_entry, hi', hj, hval', h1.rbs_entry_eq_of_ne_row], refl,
+      exact (ne_of_lt h_h1_i).symm,
+      change _ < h'.i.succ, rw hi', exact lt_add_one _,
+      exact lt_add_one _ },
+    rw [dif_neg h_1, h'.rbwf_of_not_cell (by rwa [hi', hj])],
+    rw [h'.rbs_end_entry, hi', hj, hval', h1.rbs_entry_eq_of_ne_row], refl,
+    exact (ne_of_lt h_h1_i).symm },
+  have key_gt_hi : ∀ i j (hi : h.i < i), h1'.rbs cell1' i j = h'.rbwf.2 i j,
+  { intros i j hi,
+    rw h1'.rbs_entry_eq_of_ne_row, rotate, rw h1i',
+    exact (ne_of_lt (h_h1_i.trans hi)).symm,
+    rw ssyt.rbs_cert.rbwf, split_ifs,
+    { rw [dif_pos h_1, h'.rbwf_of_cell (by rwa [hi', hj])],
+      rw ssyt.rbs_cert.rbwf_eq_of_eq_ge_initial_row,
+      exact congr_arg nat.succ hi',
+      change (h1.rbs cell1) _ _ = T _ _, rw [hi', hj],
+      rw h1.rbs_entry_eq_of_ne_row _ (ne_of_lt h_h1_i).symm,
+      exact λ _ _ _, iff.rfl,
+      intros i' j' hi'',
+        repeat {rw ssyt.rbs_cert.rbs_entry_eq_of_ne_row},
+        symmetry, apply ne_of_lt, apply h_h1_i.trans, exact hi'',
+        symmetry, rw hi', apply ne_of_lt, convert hi'',
+        symmetry, apply ne_of_lt, convert hi'',
+      exact hi },
+    rw [dif_neg h_1, h'.rbwf_of_not_cell (by rwa [hi', hj])],
+    rw [h'.rbs_end_entry, hi', hj, hval', h1.rbs_entry_eq_of_ne_row], refl,
+    symmetry, apply ne_of_lt, exact h_h1_i.trans hi,
+  },
+  intros i j,
+  cases @trichotomous ℕ (<) (by apply_instance) i h.i,
+  apply key_lt_hi _ _ h_1,
+  cases h_1, subst i, apply key_hi,
+  apply key_gt_hi _ _ h_1,
+end
+
 end row_bump_well_founded
 
 section pieri
@@ -205,7 +397,24 @@ lemma ssyt.rbs_cert.rbwf_pieri {μ : young_diagram} :
                     change h.i.succ ≠ h'.i, rw hi, 
                     exact h.i.succ_ne_self }),
       set T12f := h1_2.rbwf.2,
-      set h12f : T12f.rbs_cert := h''.copy' T12f sorry sorry sorry sorry,
+      set h12f : T12f.rbs_cert := h''.copy' T12f 
+        (λ i j hi', by {
+          change i < h'.i.succ at hi', rw hi at hi',
+          repeat {rw ssyt.rbs_cert.rbwf_shape_eq_self_lt_initial_row}, exact id,
+          exact hi', exact hi' })
+        (λ j, by {
+          rw h1_2.rbwf_shape_eq_of_eq_ge_initial_row h1 rfl rfl (λ _ _ _, iff.rfl) _,
+          change h.i.succ ≤ h'.i.succ, rw hi,
+          intros i' j' hi',
+            apply ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
+            rintro rfl, exact not_lt_of_le hi' (hi.symm ▸ lt_add_one h.i) })
+        (λ i j hi', by {
+          apply le_of_eq,
+          rw ssyt.rbs_cert.rbwf_rbs_comm,
+          exact hi.symm ▸ lt_add_one h.i, refl, refl, refl, refl })
+        (λ j, by {
+          rw ssyt.rbs_cert.rbwf_rbs_comm,
+          exact hi.symm ▸ lt_add_one h.i, refl, refl, refl, refl }),
       have key :=
         have wf : h1_2.bound < h.bound := h.bound_decr cell,
         ssyt.rbs_cert.rbwf_pieri h1_2 h12f,
@@ -223,10 +432,22 @@ lemma ssyt.rbs_cert.rbwf_pieri {μ : young_diagram} :
         convert h.rbc_out_le_rbc_out cell hval _,
         rw ← hi, refl,
         rw ← hi, exact cell'_1 },
-      { 
-        sorry },
-      { 
-        sorry },
+      { apply (h12f.rbwf_corner_eq_of_eq_ge_initial_row h'' rfl rfl _ _).2,
+        { intros i j hi',
+            apply h1_2.rbwf_shape_eq_of_eq_ge_initial_row h1 rfl rfl (λ _ _ _, iff.rfl) _,
+            change h.i.succ ≤ i, change h'.i.succ ≤ i at hi', rwa hi at hi',
+          intros i' j' hi', --change h'_1.rbs _ _ _ = _,
+            apply ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
+            rintro rfl, exact not_lt_of_le hi' (hi.symm ▸ lt_add_one h.i),
+        },
+        intros i j hi',
+        rw ssyt.rbs_cert.rbwf_rbs_comm,
+        exact hi.symm ▸ lt_add_one h.i, refl, refl, refl, refl },
+      { apply (h1_2.rbwf_corner_eq_of_eq_ge_initial_row h1 rfl rfl _ _).2,
+        exact λ _ _ _, iff.rfl,
+        intros i j hi',
+        apply ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
+        rintro rfl, exact not_lt_of_le hi' (hi.symm ▸ lt_add_one h.i) },
     },
     { rename cell' not_cell',
       rw h'.rbwf_of_not_cell not_cell',

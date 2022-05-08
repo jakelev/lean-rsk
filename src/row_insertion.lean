@@ -264,6 +264,16 @@ begin
   rw [h.rbs_end_entry, if_neg], rintro ⟨rfl, _⟩, exact h_ne rfl
 end
 
+lemma ssyt.rbs_cert.rbs_entry_le {μ : young_diagram} {T : ssyt μ} 
+  (h : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) {i j : ℕ} :
+h.rbs cell i j ≤ T i j := 
+begin
+  rw h.rbs_entry, split_ifs,
+  cases h_1,
+  exact le_of_lt ((T.rbc_not_cell_or_val_lt _ _).resolve_left (λ h, h cell)),
+  refl
+end
+
 lemma ssyt.rbs_cert.next_rbc_le {μ : young_diagram} {T : ssyt μ} 
   (h : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) :
  (h.rbs cell).rbc h.i.succ h.out ≤ h.j :=
@@ -363,83 +373,83 @@ end row_bump_step
 
 section commutativity
 
-/-
+-- /-
 
-Context:
+-- Context:
 
-  T  `→  T'`  `copy h' back to T ` 
-  ↓h     `↓`  `copy h over to T' `
-  T1 →h' T2
+--   T  `→  T'`  `copy h' back to T ` 
+--   ↓h     `↓`  `copy h over to T' `
+--   T1 →h' T2
 
-with h'.i < h.i.
+-- with h'.i < h.i.
 
-Then the diagram commutes.
-NOTE: This is intended to only be used when (h.i, h.j), (h'.i, h'.j) ∈ μ,
-i.e. this is a square of rbs steps, not rbs_end steps.
+-- Then the diagram commutes.
+-- NOTE: This is intended to only be used when (h.i, h.j), (h'.i, h'.j) ∈ μ,
+-- i.e. this is a square of rbs steps, not rbs_end steps.
 
-See if this is actually helpful...
--/
+-- See if this is actually helpful...
+-- -/
 
--- copy h' back to T
-@[reducible]
-def ssyt.cert_comm_back {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
-  (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
-  T.rbs_cert :=
-  h'.copy T
-  (λ _ _ _, iff.rfl)
-  (λ i j hi', begin 
-    apply h.rbs_entry_eq_of_ne_row _ (ne_of_lt _),
-    exact lt_of_le_of_lt hi' hi, end)
+-- -- copy h' back to T
+-- @[reducible]
+-- def ssyt.cert_comm_back {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
+--   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
+--   T.rbs_cert :=
+--   h'.copy T
+--   (λ _ _ _, iff.rfl)
+--   (λ i j hi', begin 
+--     apply h.rbs_entry_eq_of_ne_row _ (ne_of_lt _),
+--     exact lt_of_le_of_lt hi' hi, end)
 
-lemma ssyt.cert_comm_back_cell {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
-  (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
-(h'.i, h'.j) = (h'.i, (T.cert_comm_back h cell h' hi).j) :=
-by rw ssyt.rbs_cert.copy_j
+-- lemma ssyt.cert_comm_back_cell {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
+--   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
+-- (h'.i, h'.j) = (h'.i, (T.cert_comm_back h cell h' hi).j) :=
+-- by rw ssyt.rbs_cert.copy_j
 
--- copy h over to T'
-@[reducible]
-def ssyt.cert_comm_fwd {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
-  (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) 
-  (cell' : (h'.i, h'.j) ∈ μ) :=
-h.copy' ((T.cert_comm_back h cell h' hi).rbs
-          begin rw h'.copy_j, exact cell', end)
-  (λ _ _ _, id)
-  (λ _, iff.rfl)
-  (λ i j hi', begin
-    rw ssyt.rbs_cert.rbs_entry, split_ifs,
-    { cases h_1, apply le_of_lt,
-      apply (ssyt.rbc_not_cell_or_val_lt _ _ _).resolve_left _, push_neg,
-      rwa ssyt.cert_comm_back_cell at cell' },
-    refl,
-  end)
-  (λ j, begin
-    rw ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
-    exact (ne_of_lt hi).symm
-  end)
+-- -- copy h over to T'
+-- @[reducible]
+-- def ssyt.cert_comm_fwd {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
+--   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) 
+--   (cell' : (h'.i, h'.j) ∈ μ) :=
+-- h.copy' ((T.cert_comm_back h cell h' hi).rbs
+--           begin rw h'.copy_j, exact cell', end)
+--   (λ _ _ _, id)
+--   (λ _, iff.rfl)
+--   (λ i j hi', begin
+--     rw ssyt.rbs_cert.rbs_entry, split_ifs,
+--     { cases h_1, apply le_of_lt,
+--       apply (ssyt.rbc_not_cell_or_val_lt _ _ _).resolve_left _, push_neg,
+--       rwa ssyt.cert_comm_back_cell at cell' },
+--     refl,
+--   end)
+--   (λ j, begin
+--     rw ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
+--     exact (ne_of_lt hi).symm
+--   end)
 
-lemma ssyt.cert_comm_fwd_cell {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
-  (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
-  (cell' : (h'.i, h'.j) ∈ μ) :
-(h.i, h.j) = (h.i, (T.cert_comm_fwd h cell h' hi cell').j) :=
-by rw ssyt.rbs_cert.copy'_j
+-- lemma ssyt.cert_comm_fwd_cell {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
+--   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
+--   (cell' : (h'.i, h'.j) ∈ μ) :
+-- (h.i, h.j) = (h.i, (T.cert_comm_fwd h cell h' hi cell').j) :=
+-- by rw ssyt.rbs_cert.copy'_j
 
-lemma ssyt.cert_comm {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
-  (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
-  (cell' : (h'.i, h'.j) ∈ μ) :
-h'.rbs cell' = 
-(T.cert_comm_fwd h cell h' hi cell').rbs
-  (T.cert_comm_fwd_cell h cell h' hi cell' ▸ cell) :=
-begin
-  sorry,
-end
+-- lemma ssyt.cert_comm {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
+--   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
+--   (cell' : (h'.i, h'.j) ∈ μ) :
+-- h'.rbs cell' = 
+-- (T.cert_comm_fwd h cell h' hi cell').rbs
+--   (T.cert_comm_fwd_cell h cell h' hi cell' ▸ cell) :=
+-- begin
+--   sorry,
+-- end
 
 
 end commutativity
 
 section examples
 
-#eval (μ5331.lowest_ssyt.rbs_start_cert 0).rbs sorry
-#eval (μ5331.lowest_ssyt.rbs_start_cert 2).rbs sorry
-#eval (μ5331.lowest_ssyt.rbs_start_cert 4).rbs_end sorry
+-- #eval (μ5331.lowest_ssyt.rbs_start_cert 0).rbs sorry
+-- #eval (μ5331.lowest_ssyt.rbs_start_cert 2).rbs sorry
+-- #eval (μ5331.lowest_ssyt.rbs_start_cert 4).rbs_end sorry
 
 end examples
