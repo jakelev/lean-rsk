@@ -29,11 +29,8 @@ Various independence lemmas are shown for later use:
  * the insertion only affects row i [DONE]
  * the insertion column only depends on row i [DONE]
  * the extra assumption for column-strictness only depends on rows ≤ i [DONE]
- * commutativity: insert(k', row i+1) ∘ insert(k, row i) agrees with
-                  insert(k, row i) ∘ insert(k', row i+1)
-     as long as the left-hand side is defined and k ≤ k'. 
-     [[unsure if this is the right statement]]
-
+ * commutativity: this is not currently used anywhere, but might be helpful to shorten
+    [row_bump.lean/ssyt.rbs_cert.rbwf_pieri] or make it easier.
 
 Finally, auxiliary facts are shown about the size and weight of the tableau.
 -/
@@ -373,76 +370,50 @@ end row_bump_step
 
 section commutativity
 
--- /-
+/-
+Commutativity:
 
--- Context:
+T  →h1  T1
+↓h      ↓h'
+T' →h1' Tf
 
---   T  `→  T'`  `copy h' back to T ` 
---   ↓h     `↓`  `copy h over to T' `
---   T1 →h' T2
+gives the same result, assuming the bumps are in different rows
 
--- with h'.i < h.i.
-
--- Then the diagram commutes.
--- NOTE: This is intended to only be used when (h.i, h.j), (h'.i, h'.j) ∈ μ,
--- i.e. this is a square of rbs steps, not rbs_end steps.
-
--- See if this is actually helpful...
--- -/
-
--- -- copy h' back to T
--- @[reducible]
--- def ssyt.cert_comm_back {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
---   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
---   T.rbs_cert :=
---   h'.copy T
---   (λ _ _ _, iff.rfl)
---   (λ i j hi', begin 
---     apply h.rbs_entry_eq_of_ne_row _ (ne_of_lt _),
---     exact lt_of_le_of_lt hi' hi, end)
-
--- lemma ssyt.cert_comm_back_cell {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
---   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) :
--- (h'.i, h'.j) = (h'.i, (T.cert_comm_back h cell h' hi).j) :=
--- by rw ssyt.rbs_cert.copy_j
-
--- -- copy h over to T'
--- @[reducible]
--- def ssyt.cert_comm_fwd {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
---   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i) 
---   (cell' : (h'.i, h'.j) ∈ μ) :=
--- h.copy' ((T.cert_comm_back h cell h' hi).rbs
---           begin rw h'.copy_j, exact cell', end)
---   (λ _ _ _, id)
---   (λ _, iff.rfl)
---   (λ i j hi', begin
---     rw ssyt.rbs_cert.rbs_entry, split_ifs,
---     { cases h_1, apply le_of_lt,
---       apply (ssyt.rbc_not_cell_or_val_lt _ _ _).resolve_left _, push_neg,
---       rwa ssyt.cert_comm_back_cell at cell' },
---     refl,
---   end)
---   (λ j, begin
---     rw ssyt.rbs_cert.rbs_entry_eq_of_ne_row,
---     exact (ne_of_lt hi).symm
---   end)
-
--- lemma ssyt.cert_comm_fwd_cell {μ : young_diagram} (T : ssyt μ) (h : T.rbs_cert)
---   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
---   (cell' : (h'.i, h'.j) ∈ μ) :
--- (h.i, h.j) = (h.i, (T.cert_comm_fwd h cell h' hi cell').j) :=
--- by rw ssyt.rbs_cert.copy'_j
-
--- lemma ssyt.cert_comm {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
---   (cell : (h.i, h.j) ∈ μ) (h' : (h.rbs cell).rbs_cert) (hi : h'.i < h.i)
---   (cell' : (h'.i, h'.j) ∈ μ) :
--- h'.rbs cell' = 
--- (T.cert_comm_fwd h cell h' hi cell').rbs
---   (T.cert_comm_fwd_cell h cell h' hi cell' ▸ cell) :=
--- begin
---   sorry,
--- end
-
+-/
+lemma ssyt.rbs_cert.rbs_comm {μ : young_diagram}
+  {T : ssyt μ} (h h1 : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) (cell1 : (h1.i, h1.j) ∈ μ)
+  (h_h1_i : h1.i ≠ h.i)
+  (h' : (h1.rbs cell1).rbs_cert) (hi : h'.i = h.i) (hval : h'.val = h.val)
+  (h1' : (h.rbs cell).rbs_cert) (h1i : h1'.i = h1.i) (h1val : h1'.val = h1.val)
+  (cell' : (h'.i, h'.j) ∈ μ := by {
+    rwa [hi, (_ : h'.j = h.j)],
+    rw [ssyt.rbs_cert.j, hi, hval, ssyt.rbc_eq_of_eq_row],
+    exact λ _, iff.rfl,
+    intro j, rw h1.rbs_entry_eq_of_ne_row, exact h_h1_i.symm }) 
+  (cell1' : (h1'.i, h1'.j) ∈ μ := by {
+    rwa [h1i, (_ : h1'.j = h1.j)],
+    rw [ssyt.rbs_cert.j, h1i, h1val, ssyt.rbc_eq_of_eq_row],
+    exact λ _, iff.rfl,
+    intro j, rw h.rbs_entry_eq_of_ne_row, exact h_h1_i })
+  (i j : ℕ) : h1'.rbs cell1' i j = h'.rbs cell' i j :=
+begin
+  have hj : h'.j = h.j := by {
+    rw [ssyt.rbs_cert.j, hi, hval, ssyt.rbc_eq_of_eq_row],
+    exact λ _, iff.rfl,
+    intro j, rw h1.rbs_entry_eq_of_ne_row, exact h_h1_i.symm },
+  have h1j : h1'.j = h1.j := by {
+    rw [ssyt.rbs_cert.j, h1i, h1val, ssyt.rbc_eq_of_eq_row],
+    exact λ _, iff.rfl,
+    intro j, rw h.rbs_entry_eq_of_ne_row, exact h_h1_i },
+  cases ne_or_eq i h.i,
+    rw h'.rbs_entry_eq_of_ne_row,
+    rw [h1'.rbs_entry, h1i, h1val, h1j, h.rbs_entry_eq_of_ne_row], refl,
+    exact h_1, rwa hi,
+  cases h_1,
+    rw h1'.rbs_entry_eq_of_ne_row,
+    rw [h'.rbs_entry, hi, hval, hj, h1.rbs_entry_eq_of_ne_row], refl,
+    exact h_h1_i.symm, rw h1i, exact h_h1_i.symm,
+end
 
 end commutativity
 
