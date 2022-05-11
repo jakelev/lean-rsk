@@ -45,7 +45,8 @@ by apply ssyt.wt_add
 
 def ssyt.rec_cert.rsk_step
   {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) :
-  Σ (c : μ.outer_corner), ssyt c.add × ssyt c.add :=
+  -- Σ (c : μ.outer_corner), ssyt c.add × ssyt c.add :=
+  Σ (ν : young_diagram), ssyt ν × ssyt ν :=
 ⟨_, ⟨rcert.rec_step, (B.row_bump rcert.bumpval).2⟩⟩
 
 def ssyt.rec_cert_of_gt {μ : young_diagram} (R B : ssyt μ) (recval bumpval : ℕ)
@@ -56,32 +57,33 @@ def ssyt.rec_cert_of_gt {μ : young_diagram} (R B : ssyt μ) (recval bumpval : �
     (λ not_cell, (R.zeros not_cell).symm ▸ nat.zero_le recval),
   rec_eq_left := λ _ _ cell h_eq, false.rec _ $ ne_of_lt (h_lt _ _ cell) h_eq }
 
--- saves some effort for the inductive case
-def ssyt.rec_cert.next_cert_of_gt
-  {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B)
-  (recval' bumpval' : ℕ) (h_lt : rcert.recval < recval') :
-  ssyt.rec_cert rcert.rec_step (B.row_bump rcert.bumpval).2 :=
-ssyt.rec_cert_of_gt _ _ recval' bumpval'
-  (λ i j cell, by { rw rcert.rec_entry, split_ifs,
-                    exact h_lt,
-                    exact lt_of_le_of_lt (rcert.rec_le _ _) h_lt })
-
 def ssyt.rec_cert.next_cert
   {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B)
-  (bumpval' : ℕ) (h_le : rcert.bumpval ≤ bumpval') :
+  (recval' bumpval' : ℕ) 
+  (h : rcert.recval < recval' ∨ 
+       (rcert.recval = recval' ∧ rcert.bumpval ≤ bumpval')) :
 ssyt.rec_cert rcert.rec_step (B.row_bump rcert.bumpval).2 :=
-{ bumpval := bumpval', recval := rcert.recval,
+{ bumpval := bumpval', recval := recval',
   rec_le := λ i j, begin
-    rw ssyt.rec_cert.rec_entry, split_ifs, refl, apply rcert.rec_le,
+    apply @le_trans _ _ _ rcert.recval,
+      rw ssyt.rec_cert.rec_entry,
+      split_ifs, refl, apply rcert.rec_le,
+    cases h, exact le_of_lt h, exact le_of_eq h.1,
   end,
   rec_eq_left := λ i j cell h_eq, begin
-    apply lt_of_le_of_lt _,
-    apply ssyt.rbs_cert.rbwf_pieri _ _, refl, exact h_le,
-    rw rcert.rec_entry at h_eq, split_ifs at h_eq,
-      {cases h, refl },
-    apply le_of_lt (rcert.rec_eq_left i j _ h_eq),
-    rw young_diagram.outer_corner.mem_add at cell,
-    exact cell.resolve_left h,
-  end }
+    cases h,
+      { exfalso, apply ne_of_lt (lt_of_le_of_lt _ h) h_eq,
+        rw rcert.rec_entry, split_ifs, refl, apply rcert.rec_le },
+      { cases h.1,
+        apply lt_of_le_of_lt _,
+        apply ssyt.rbs_cert.rbwf_pieri _ _, refl, exact h.2,
+        rw rcert.rec_entry at h_eq, split_ifs at h_eq,
+          { cases h_1, refl },
+          { apply le_of_lt (rcert.rec_eq_left i j _ h_eq),
+            rw young_diagram.outer_corner.mem_add at cell,
+            exact cell.resolve_left h_1 }
+      }
+  end
+}
 
 end recording_tableau

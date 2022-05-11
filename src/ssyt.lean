@@ -16,14 +16,6 @@ instance ssyt.to_fun {μ : young_diagram} :
   has_coe_to_fun (ssyt μ) (λ T, ℕ → ℕ → ℕ) :=
 { coe := λ T i j, T.entry i j }
 
--- lemma ssyt.row_weak {μ : young_diagram} (T : ssyt μ)
---   {i j1 j2 : ℕ} (hj : j1 < j2) (hcell : (i, j2) ∈ μ) : T i j1 ≤ T i j2 :=
---   T.row_weak' hj hcell
-
--- lemma ssyt.col_strict {μ : young_diagram} (T : ssyt μ)
---   {i1 i2 j : ℕ} (hi : i1 < i2) (hcell : (i2, j) ∈ μ) : T i1 j < T i2 j :=
---   T.col_strict' hi hcell
-
 lemma ssyt.zeros {μ : young_diagram} (T : ssyt μ) 
   {i j : ℕ} (not_cell : (i, j) ∉ μ) : T i j = 0 := T.zeros' not_cell
 
@@ -292,6 +284,21 @@ begin
 end
 
 end weight
+
+section T_empty
+
+instance ssyt.has_emptyc : has_emptyc (ssyt ∅) :=
+{ emptyc := { 
+  entry := λ _ _, 0,
+  row_weak := λ _ _ _ _ cell, false.rec _ cell,
+  col_strict := λ _ _ _ _ cell, false.rec _ cell,
+  zeros' := λ _ _ _, rfl } }
+
+def T_empty := (∅ : ssyt ∅)
+
+@[simp] lemma T_empty_wt (val : ℕ) : T_empty.wt val = 0 := rfl
+
+end T_empty
 
 -- example {μ : young_diagram} (T : ssyt μ) {i : ℕ} : string :=
 --   string.intercalate ", " 

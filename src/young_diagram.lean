@@ -21,10 +21,6 @@ def young_diagram.nw_of (μ : young_diagram)
 
 instance young_diagram.has_subset : has_subset young_diagram :=
 { subset := λ μ ν, μ.cells ⊆ ν.cells }
-instance young_diagram.has_emptyc : has_emptyc young_diagram :=
-{ emptyc := { cells := finset.empty, nw_of' := λ _ _ _ _ _ _ h, h, } }
-
-def μ_empty := (∅ : young_diagram)
 
 def young_diagram.size (μ : young_diagram) := μ.cells.card
 def young_diagram.row (μ : young_diagram) (i : ℕ) := μ.cells.filter (λ c, c.fst = i)
@@ -143,6 +139,17 @@ begin
   rw [μ.mem_col_iff', μ.mem_col_iff'] at this,
   exact (lt_self_iff_false _).mp (this h_lt),
 end
+
+section μ_empty
+
+instance young_diagram.has_emptyc : has_emptyc young_diagram :=
+{ emptyc := { cells := finset.empty, nw_of' := λ _ _ _ _ _ _ h, h, } }
+
+def μ_empty := (∅ : young_diagram)
+
+@[simp] lemma μ_empty_size : (∅ : young_diagram).size = 0 := rfl
+
+end μ_empty
 
 section of_row_lens
 
