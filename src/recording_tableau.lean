@@ -1,6 +1,36 @@
 import tactic
 import row_bump
 
+/-
+
+Recording tableau
+
+The recording tableau "records" the outer corner resulting from [ssyt.row_bump]
+on an associated ssyt of the same shape (called the "insertion tableau").
+A specified value is placed in the outer corner of the recording tableau.
+
+This is defined using [ssyt.legal.add].
+
+This file contains:
+  - basic definitions and weight of the tableau
+    [ssyt.rec_cert]
+    [ssyt.rec_cert.to_legal]
+    [ssyt.rec_cert.rec_step]
+    [ssyt.rec_cert.rec_wt]
+    [ssyt.rec_cert.rec_wt]
+
+  - The key fact: 
+    after bumping/recording a legal pair (recval, bumpval), any other 
+    pair (recval', bumpval') will then be legal as long as
+        (recval, bumpval) ≤ₗ (recval', bumpval')
+    where ≤ₗ refers to lexicographic order on ℕ × ℕ. That is,
+      recval < recval' ∨ (recval = recval' ∧ bumpval ≤ bumpval').
+    
+    [ssyt.rec_cert.next_cert]
+    This fact uses the key lemma [ssyt.rbs_cert.rbwf_pieri].
+
+-/
+
 section recording_tableau
 
 section rec_cert
