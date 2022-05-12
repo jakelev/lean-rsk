@@ -3,12 +3,13 @@ import row_bump
 
 section recording_tableau
 
--- is this the right definition?
-structure ssyt.rec_cert {μ : young_diagram} (R B : ssyt μ) := -- sorry
+section rec_cert
+
+structure ssyt.rec_cert {μ : young_diagram} (R B : ssyt μ) :=
   (recval bumpval : ℕ)
   (rec_le : ∀ i j, R i j ≤ recval)
-  (rec_eq_left : ∀ i j (cell : (i, j) ∈ μ), R i j = recval →
-                 j < (B.row_bump bumpval).1.j)
+  (rec_eq_left : ∀ i j (cell : (i, j) ∈ μ),
+      R i j = recval → j < (B.row_bump bumpval).1.j)
 
 def ssyt.rec_cert.to_legal
   {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) : R.legal :=
@@ -28,6 +29,10 @@ def ssyt.rec_cert.to_legal
                                (B.row_bump rcert.bumpval).1.not_cell
 }
 
+end rec_cert
+
+section rec_step
+
 def ssyt.rec_cert.rec_step
   {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) :
   ssyt (B.row_bump rcert.bumpval).1.add :=
@@ -42,12 +47,6 @@ lemma ssyt.rec_cert.rec_wt
   {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) (val : ℕ) :
   rcert.rec_step.wt val = R.wt val + ite (val = rcert.recval) 1 0 :=
 by apply ssyt.wt_add
-
-def ssyt.rec_cert.rsk_step
-  {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) :
-  -- Σ (c : μ.outer_corner), ssyt c.add × ssyt c.add :=
-  Σ (ν : young_diagram), ssyt ν × ssyt ν :=
-⟨_, ⟨rcert.rec_step, (B.row_bump rcert.bumpval).2⟩⟩
 
 def ssyt.rec_cert_of_gt {μ : young_diagram} (R B : ssyt μ) (recval bumpval : ℕ)
   (h_lt : ∀ i j (cell : (i, j) ∈ μ), R i j < recval) : ssyt.rec_cert R B :=
@@ -85,5 +84,7 @@ ssyt.rec_cert rcert.rec_step (B.row_bump rcert.bumpval).2 :=
       }
   end
 }
+
+end rec_step
 
 end recording_tableau

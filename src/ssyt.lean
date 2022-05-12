@@ -1,6 +1,41 @@
 import tactic
 import young_diagram
 
+/-
+
+Semistandard Young tableaux
+
+A semistandard Young tableau is a filling of a Young diagram μ by natural
+numbers, i.e. a function from μ.cells → ℕ. It is represented below as a
+function ℕ → ℕ → ℕ, which is required to be zero for (i, j) ∉ μ.
+
+The filling is required to be weakly increasing along rows (i.e. for fixed i)
+and strictly increasing along columns (i.e. for fixed j).
+
+An example of an SSYT T of shape μ = [4, 2, 1] is
+
+1 1 1 3
+2 2
+3
+
+(See example 0 in [rsk.lean/rsk.ex0_R].)
+
+This file contains:
+  - definition and basic properties of ssyt (μ : young_diagram), including
+    weight and a string representation for #eval
+  - a fintype instance for ssyts of fixed shape and bounded entries
+      [ssyt_bounded.fintype]
+  - functions for replacing an entry, or adding an entry in an outer_corner
+      [ssyt.legal]
+      [ssyt.legal.replace]
+      [ssyt.legal.add]
+  - special examples
+      [T_empty]
+      [young_diagram.highest_ssyt]
+      [young_diagram.lowest_ssyt]
+
+-/
+
 section ssyt
 
 @[ext]
@@ -260,9 +295,8 @@ begin
     split_ifs, cases h_3, simp only [ne.symm h_1, ne.symm h_2], refl },
 end
 
--- new strip of k's + (box if T h.i h.j = k) = 
+-- (new strip of k's) + (box if T h.i h.j = k) = 
 -- (old strip of k's) + (box if h.val = k)
-
 lemma ssyt.wt_replace {μ : young_diagram} (T : ssyt μ) (val : ℕ)
   (h : T.legal) (cell : (h.i, h.j) ∈ μ) :
   (h.replace cell).wt val + ite (val = T h.i h.j) 1 0 =
@@ -300,10 +334,6 @@ def T_empty := (∅ : ssyt ∅)
 
 end T_empty
 
--- example {μ : young_diagram} (T : ssyt μ) {i : ℕ} : string :=
---   string.intercalate ", " 
---     (list.map (λ j, (T i j).repr) (list.range (μ.row_len i))
-
 section repr
 
 def ssyt.repr {μ : young_diagram} (T : ssyt μ) : string :=
@@ -320,7 +350,7 @@ end repr
 
 section examples
 
-@[simp] def young_diagram.highest_ssyt (μ : young_diagram) : ssyt μ :=
+def young_diagram.highest_ssyt (μ : young_diagram) : ssyt μ :=
 { entry := λ i j, ite ((i, j) ∈ μ) i 0,
   row_weak := λ i j1 j2 hj hcell, begin
     rw if_pos hcell, rw if_pos (μ.nw_of (le_refl _) (le_of_lt hj) hcell),
@@ -331,8 +361,6 @@ section examples
   zeros' := λ i j hij, by rw if_neg hij,
 }
 
--- if μ.col_len j = i then μ.col_len 0, otherwise increasing with i
--- i + μ.col_len 0 - μ.col_len j
 def young_diagram.lowest_ssyt (μ : young_diagram) : ssyt μ :=
 { entry := λ i j, ite ((i, j) ∈ μ) (i + μ.col_len 0 - μ.col_len j) 0,
   row_weak := λ i j1 j2 hj hcell, begin

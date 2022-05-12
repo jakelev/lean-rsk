@@ -26,13 +26,16 @@ Analogs of each of the lemmas shown for ssyt.rbs and ssyt.rbs_end are shown here
     [ssyt.rbs_cert.rbwf_size]
     [ssyt.rbs_cert.rbwf_wt]
 
-The key lemma is the *"pieri" property [ssyt.rbs_cert.rbwf_pieri]*: 
+The *key lemma* is the *"pieri" property* [ssyt.rbs_cert.rbwf_pieri] : 
   if we bump in k, then k' ≥ k starting from the same row, 
-  the first output column is < the second output column.
-This is essentially a consequence of [ssyt.rbs_cert.rbc_lt_rbc] and 
-[ssyt.rbs_cert.rbc_out_le_rbc_out] and commutativity [ssyt.rbs_cert.rbwf_rbs_comm].
-
+  then the first output column is < the second output column.
+This is essentially a consequence of 
+  [ssyt.rbs_cert.rbc_lt_rbc] and 
+  [ssyt.rbs_cert.rbc_out_le_rbc_out] and 
+  [ssyt.rbs_cert.rbwf_rbs_comm].
 This lemma is used to define the recording tableau.
+The proof is currently *very long* and could probably be improved.
+
 -/
 
 section row_bump_well_founded
@@ -57,17 +60,10 @@ def ssyt.rbs_cert.rbwf {μ : young_diagram} :
   (λ not_cell, ⟨_, h.rbs_end not_cell⟩)
 using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
 
--- @[reducible] def ssyt.rbs_cert.rbwf_shape
---   {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) := h.rbwf.1.add
--- @[reducible] def ssyt.rbs_cert.rbwf_ssyt
---   {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) := h.rbwf.2
-
-@[simp]
 lemma ssyt.rbs_cert.rbwf_of_cell {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
  (cell : (h.i, h.j) ∈ μ) : h.rbwf = (h.next_cert cell).rbwf :=
 by rw [ssyt.rbs_cert.rbwf, dif_pos cell]
 
-@[simp]
 lemma ssyt.rbs_cert.rbwf_of_not_cell {μ : young_diagram} {T : ssyt μ} 
   (h : T.rbs_cert) (not_cell : (h.i, h.j) ∉ μ) : 
   h.rbwf = ⟨_, h.rbs_end not_cell⟩ :=
@@ -262,7 +258,7 @@ lemma ssyt.rbs_cert.rbwf_j_le {μ : young_diagram} :
   end)
 using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
 
-/- Setup for this proof:
+/- Setup for this proof (the hardest one so far!) :
 
 The main case is where both h.rbwf and h'.rbwf are nonterminal.
 Then we obtain h1 and h'', and trace out the diagram in blue below:
@@ -402,6 +398,7 @@ using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.boun
 end pieri
 
 section row_bump
+/- Definition of row bumping! -/
 
 def ssyt.row_bump {μ : young_diagram} (T : ssyt μ) (bumpval : ℕ) :
   Σ (c : μ.outer_corner), ssyt c.add :=
@@ -421,85 +418,3 @@ end row_bump
 #eval (μ5331.lowest_ssyt.rbs_start_cert 0).rbwf.2
 #eval (μ5331.lowest_ssyt.rbs_start_cert 1).rbwf.2
 #eval (μ5331.lowest_ssyt.row_bump 2).2
--- #eval ssyt.rb_ind 4 (μ5331.lowest_ssyt.rbs_start_cert 0) sorry
-
--- section experimental
-
--- lemma ssyt.rbs_cert.not_cell_of_bound_zero {μ : young_diagram} {T : ssyt μ} 
---   (h : T.rbs_cert) (hzero : h.bound = 0) : (h.i, h.j) ∉ μ :=
--- begin
---   intro cell,
---   rw [ssyt.rbs_cert.bound, nat.sub_eq_zero_iff_le] at hzero,
---   apply not_lt_of_le hzero,
---   rw ← μ.mem_col_iff',
---   exact μ.nw_of (le_refl _) (nat.zero_le _) cell,
--- end
-
--- lemma ssyt.rbs_cert.next_bound_succ {μ : young_diagram} {T : ssyt μ} 
---   (h : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) : 
---   (h.next_cert cell).bound.succ = h.bound :=
--- begin
---   rw [ssyt.rbs_cert.bound, ssyt.rbs_cert.bound, h.next_cert_i, 
---       nat.sub_succ, nat.succ_pred_eq_of_pos],
---   apply nat.sub_pos_of_lt,
---   rw ← μ.mem_col_iff',
---   exact μ.nw_of (le_refl _) (nat.zero_le _) cell,
--- end
-
--- -- bump in until no longer able (but don't do the last step)
--- def ssyt.rbs_cert.rbwf'' {μ : young_diagram} : Π {T : ssyt μ} (h : T.rbs_cert), ssyt μ
--- | T h := dite ((h.i, h.j) ∈ μ)
---           (λ cell, have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
---                    (h.next_cert cell).rbwf'')
---           (λ _, T)
--- using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
-
--- @[simp]
--- lemma ssyt.rbs_cert.rbwf''_of_cell {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
---  (cell : (h.i, h.j) ∈ μ) : (h.next_cert cell).rbwf'' = h.rbwf'' :=
--- begin 
---   symmetry, rw [ssyt.rbs_cert.rbwf'', dif_pos cell],
--- end
-
--- -- def ssyt.rbs_cert.rbwf_last_cert {μ : young_diagram} : 
--- --   Π {T : ssyt μ} (h : T.rbs_cert), h.rbwf.rbs_cert
--- -- | T h := dite ((h.i, h.j) ∈ μ)
--- --           (λ cell, have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
--- --                    begin
--- --                      set key1 := (h.next_cert cell).rbwf_last_cert,
--- --                      have key2 := (h.rbwf_of_cell cell),
--- --                      rwa key2 at key1,
--- --                    end)
--- --           (λ _, begin 
-
--- --           end)
--- -- using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
-
-
--- def ssyt.rbs_cert.rbwf_pre {μ : young_diagram} : Π {T : ssyt μ} (h : T.rbs_cert), 
---   Σ' (T' : ssyt μ) (h' : T'.rbs_cert), (h'.i, h'.j) ∉ μ
--- | T h := dite ((h.i, h.j) ∈ μ)
---           (λ cell, have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
---                    (h.next_cert cell).rbwf_pre)
---           (λ not_cell, ⟨T, h, not_cell⟩)
--- using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
-
--- def ssyt.rbs_cert.rbwf' {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
---   : Σ ν, ssyt ν := ⟨_, h.rbwf_pre.2.1.rbs_end h.rbwf_pre.2.2⟩
---   -- := h.rbwf_pre.2.1.rbs_end h.rbwf_pre.2.2
-
--- def ssyt.rb_ind : Π (b : ℕ) 
---   {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) (hb : h.bound = b),
---   Σ ν, ssyt ν
--- | 0 := λ μ T h hb, ⟨_, h.rbs_end (h.not_cell_of_bound_zero hb)⟩
--- | (nat.succ b) := λ μ T h hb, 
---   dite ((h.i, h.j) ∈ μ)
---   (λ cell, ssyt.rb_ind b (h.next_cert cell) 
---     (nat.succ.inj $ (h.next_bound_succ cell).trans hb))
---   (λ not_cell, ⟨_, h.rbs_end not_cell⟩)
-
-
-
--- #check ssyt.rbs_cert.rbwf'
-
--- end experimental

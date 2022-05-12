@@ -11,28 +11,50 @@ and either replaces the leftmost k+1, or if there are no entries > k, it is
 added at the end of the row.
 
 An assumption is necessary (to preserve column strictness) for this to be legal.
+  [ssyt.rbs_cert]
+  [ssyt.rbs_cert.legal_of_cert]
 
 The bump position is defined using nat.find.
+  [ssyt.rbc]
+  
 The bump itself is either ssyt.legal.replace or ssyt.legal.add.
+  [ssyt.rbs]
+  [ssyt.rbs_end]
 
 Two key lemmas are:
-  1. The removed entry from row i is itself legal for bumping into row i+1. [DONE]
-  2. If so, the (i+1)st row bump column is ≤ the ith row bump column. [DONE]
+  1. The removed entry from row i is itself legal for bumping into row i+1.
+    [ssyt.rbs_cert.next_cert]
+  2. If so, the (i+1)st row bump column is ≤ the ith row bump column.
+    [ssyt.rbs_cert.next_rbc_le]
   3. If we insert k, followed by k' ≥ k, in the same row, the k' bump column is 
     *strictly* to the right (larger) than the k column, and the bumped-out
-    entry is weakly larger than the first bumped-out entry. [DONE]
+    entry is weakly larger than the first bumped-out entry.
+    [ssyt.rbs_cert.rbc_lt_rbc]
+    [ssyt.rbs_cert.rbc_out_le_rbc_out]
 Lemma 2 is proven in more generality. Lemmas 1-2 are used to define
 row insertion by successive row bump steps.
-Lemma 3 is used to prove that the recording tableau is semistandard.
+Lemma 3 is used to prove that the recording tableau is semistandard,
+which is currently a hard proof (see [row_bump.lean/ssyt.rbs_cert.rbwf_pieri]).
 
 Various independence lemmas are shown for later use:
- * the insertion only affects row i [DONE]
- * the insertion column only depends on row i [DONE]
- * the extra assumption for column-strictness only depends on rows ≤ i [DONE]
- * commutativity: this is not currently used anywhere, but might be helpful to shorten
-    [row_bump.lean/ssyt.rbs_cert.rbwf_pieri] or make it easier.
+ * the insertion only affects row i
+    [ssyt.rbs_entry_eq_of_ne_row]
+    [ssyt.rbs_cert.rbs_end_shape_eq_of_ne_row]
+    [ssyt.rbs_cert.rbs_end_entry_eq_of_ne_row]
+ * the insertion column only depends on row i
+    [ssyt.rbc_eq_of_eq_row]
+ * the extra assumption for column-strictness only depends on rows ≤ i
+    [ssyt.rbs_cert.copy]
+    [ssyt.rbs_cert.copy']
+ * commutativity of two rbs steps in different rows: 
+    [ssyt.rbs_cert.rbs_comm]
+   Note: this is _not_ currently used anywhere, but it might be possible to
+    use it to golf [row_bump.lean/ssyt.rbs_cert.rbwf_pieri].
 
 Finally, auxiliary facts are shown about the size and weight of the tableau.
+  [ssyt.rbs_cert.rbs_wt]
+  [ssyt.rbs_cert.rbs_end_size]
+  [ssyt.rbs_cert.rbs_end_wt]
 -/
 
 section row_bump_column
@@ -86,6 +108,8 @@ end
 end row_bump_column
 
 section row_bump_step
+
+section rbs_cert
 
 structure ssyt.rbs_cert {μ : young_diagram} (T : ssyt μ) :=
   (i val : ℕ)
@@ -216,6 +240,9 @@ begin
   rw eq_eq_row; refl
 end
 
+end rbs_cert
+
+section rbs
 
 def ssyt.rbs_cert.rbs {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
   (cell : (h.i, h.j) ∈ μ) : ssyt μ := h.legal_of_cert.replace cell
@@ -346,6 +373,8 @@ begin
   exact ne_of_gt (h.rbc_lt_rbc cell hval),
 end
 
+end rbs
+
 section size_wt
 
 lemma ssyt.rbs_cert.rbs_end_size {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
@@ -377,8 +406,7 @@ T  →h1  T1
 ↓h      ↓h'
 T' →h1' Tf
 
-gives the same result, assuming the bumps are in different rows
-
+gives the same result, assuming the bumps are in different rows.
 -/
 lemma ssyt.rbs_cert.rbs_comm {μ : young_diagram}
   {T : ssyt μ} (h h1 : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) (cell1 : (h1.i, h1.j) ∈ μ)

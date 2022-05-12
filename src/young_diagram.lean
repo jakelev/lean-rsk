@@ -1,6 +1,31 @@
 import tactic
 import data.set.basic
 
+/-
+
+Young diagrams
+
+A Young diagram is a finite set of up-left justified boxes:
+
+[5, 3, 3, 1]
+□□□□□
+□□□
+□□□
+□
+
+This file contains:
+  - basic properties and definitions involving shape, size, row and column
+    lengths, and corners of a Young diagram
+  - various constructors:
+      [young_diagram.has_empty]
+      [young_diagram.of_row_lens]
+      [young_diagram.outer_corner.add]
+      [young_diagram.inner_corner.del]
+  - TODO: young_diagram.equiv_list_decr : 
+      young_diagram ≃ {r : list ℕ // list_decr r}
+
+-/
+
 section young_diagram
 
 @[ext]
@@ -178,7 +203,6 @@ lemma list_decr_iff :
     exact h' n.succ n'.succ (nat.succ_le_succ hn), },
 end
 
-@[simp]
 def young_diagram.cells_of_row_lens (w : list ℕ) : finset (ℕ × ℕ) :=
   finset.bUnion 
     (finset.range w.length)
@@ -219,6 +243,22 @@ def young_diagram.of_row_lens (r : list ℕ) (h : list_decr r) : young_diagram :
   {c : ℕ × ℕ} :
   c ∈ young_diagram.of_row_lens w h ↔ c.snd < w.inth c.fst :=
 young_diagram.mem_of_row_lens w c
+
+lemma young_diagram.list_decr_of_row_lens (μ : young_diagram) :
+  list_decr μ.row_lens :=
+begin
+  rw list_decr_iff,
+  intros n n' hn,
+  rw young_diagram.row_lens, simp only [list.inth, list.nth_map],
+  by_cases n' < μ.col_len 0,
+  { rw list.nth_range h, rw list.nth_range (lt_of_le_of_lt hn h),
+    simp only [option.map_some', option.iget_some],
+    apply μ.row_len_decr hn },
+  { push_neg at h,
+    rw [list.nth_eq_none_iff.mpr, option.map_none'],
+    apply nat.zero_le,
+    rwa list.length_range }
+end
 
 end of_row_lens
 
@@ -268,7 +308,7 @@ instance young_diagram.dec_cell_up (μ : young_diagram)
 
 def young_diagram.inner_corner.del {μ : young_diagram} (c : μ.inner_corner) : 
 young_diagram :=
-{ cells := μ.cells.erase (c.i, c.j), -- finset.erase
+{ cells := μ.cells.erase (c.i, c.j),
   nw_of' := λ i1 i2 j1 j2 hi hj hcell, begin
     rw finset.mem_erase at *,
     split,

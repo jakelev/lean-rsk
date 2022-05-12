@@ -1,6 +1,33 @@
 import tactic
 import recording_tableau
 
+/-
+
+RSK (Robinson-Schensted-Knuth) Insertion
+
+
+Given a biword w (list (ℕ × ℕ) sorted in lex order), we create two semistandard
+Young tableaux (ssyt) of the same shape (ν : young_diagram), called the
+`insertion / bumping tableau B` and `recording tableau R`.
+
+These are defined inductively by inserting the next value ((w.nth n).2) into the
+insertion tableau using [ssyt.row_bump], then placing a value ((w.nth n).1)
+into the recording tableau in the outer corner that resulted [ssyt.row_bump.1].
+
+The inductive definition is [ssyt.rsk_inductive] (you may be surprised to see
+that it has two base cases. It feels like only one should be necessary!)
+
+The actual definition is [rsk], which has the signature
+*   rsk : Π (w : list (lex (ℕ × ℕ))), w.sorted (≤) →
+          Σ (μ : young_diagram), ssyt μ × ssyt μ
+
+Currently the only additional facts proven
+are the size and weights of the resulting tableaux.
+  [rsk_size] [rsk_wtR] [rsk_wtB]
+
+The next goal is to show that [rsk] is a bijection.
+-/
+
 section biword
 
 abbreviation rsk_le := (prod.lex.has_le ℕ ℕ).le
@@ -41,6 +68,11 @@ end
 end biword
 
 section rsk_inductive
+
+def ssyt.rec_cert.rsk_step
+  {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B) :
+  Σ (ν : young_diagram), ssyt ν × ssyt ν :=
+⟨_, ⟨rcert.rec_step, (B.row_bump rcert.bumpval).2⟩⟩
 
 def ssyt.rec_cert.rsk_inductive :
   Π {μ : young_diagram} {R B : ssyt μ} (rcert : ssyt.rec_cert R B)
@@ -111,7 +143,7 @@ def rsk_start_cert (recval bumpval : ℕ) : ssyt.rec_cert T_empty T_empty :=
   rec_eq_left := λ _ _ cell _, false.rec _ cell }
 
 def rsk :
-  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted rsk_le),
+  Π (w : list (lex (ℕ × ℕ))), w.sorted (≤) →
   Σ (μ : young_diagram), ssyt μ × ssyt μ
 | [] _ := ⟨∅, ∅, ∅⟩
 | [(recval, bumpval)] _ :=
@@ -120,7 +152,7 @@ def rsk :
   (rsk_start_cert recval bumpval).rsk_inductive (rb' :: xs) hw
 
 lemma rsk_size :
-  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted rsk_le),
+  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted (≤)),
   (rsk w hw).1.size = w.length
 | [] _ := rfl
 | [(recval, bumpval)] _ := by apply young_diagram.outer_corner.add_size
@@ -130,7 +162,7 @@ lemma rsk_size :
 }
 
 lemma rsk_wtR :
-  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted rsk_le) (val : ℕ),
+  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted (≤)) (val : ℕ),
   (rsk w hw).2.1.wt val = wtR w val
 | [] _ val := rfl
 | [(recval, bumpval)] _ val := begin
@@ -143,7 +175,7 @@ end
 }
 
 lemma rsk_wtB :
-  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted rsk_le) (val : ℕ),
+  Π (w : list (lex (ℕ × ℕ))) (hw : w.sorted (≤)) (val : ℕ),
   (rsk w hw).2.2.wt val = wtB w val
 | [] _ val := rfl
 | [(recval, bumpval)] _ val := begin
@@ -156,3 +188,23 @@ end
 }
 
 end rsk
+
+section examples
+
+def rsk.ex0 : list (lex (ℕ × ℕ)) :=
+  [(1, 1), (1, 3), (1, 3), (2, 2), (2, 2), (3, 1), (3, 2)]
+
+lemma rsk.ex0_sorted : rsk.ex0.sorted rsk_le :=
+begin
+  rw rsk.ex0, repeat {rw rsk_mono_iff}, simp,
+end
+
+def rsk.ex0_μ : young_diagram := (rsk rsk.ex0 rsk.ex0_sorted).1
+def rsk.ex0_R : ssyt rsk.ex0_μ := (rsk rsk.ex0 rsk.ex0_sorted).2.1
+def rsk.ex0_B : ssyt rsk.ex0_μ := (rsk rsk.ex0 rsk.ex0_sorted).2.2
+
+#eval rsk.ex0_μ
+#eval rsk.ex0_R
+#eval rsk.ex0_B
+
+end examples
