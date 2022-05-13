@@ -226,6 +226,64 @@ lemma ssyt.legal.entry_add {μ : young_diagram} {T : ssyt μ}
   (h : T.legal) (not_cell : (h.i, h.j) ∉ μ) (i j : ℕ) :
   (h.add not_cell) i j = ite ((i, j) = (h.i, h.j)) h.val (T i j) := rfl
 
+section delete_entry
+
+def ssyt.del {μ : young_diagram} (T : ssyt μ) (c : μ.inner_corner) : ssyt c.del :=
+{ entry := λ i j, ite ((i, j) = (c.i, c.j)) 0 (T i j),
+  row_weak := λ i j1 j2 hj cell, begin
+    rw [if_neg (c.mem_del.mp cell).1, if_neg],
+    exact T.row_weak hj (c.mem_del.mp cell).2,
+    rintro ⟨⟩, exact c.cell_right hj (c.mem_del.mp cell).2,
+  end,
+  col_strict := λ i1 i2 j hi cell, begin
+    rw [if_neg (c.mem_del.mp cell).1, if_neg],
+    exact T.col_strict hi (c.mem_del.mp cell).2,
+    rintro ⟨⟩, exact c.cell_down hi (c.mem_del.mp cell).2,
+  end,
+  zeros' := λ i j not_cell, begin
+    rw c.mem_del at not_cell, push_neg at not_cell,
+    split_ifs, refl, exact T.zeros (not_cell h),
+  end
+}
+
+lemma ssyt.del_entry {μ : young_diagram} (T : ssyt μ) (c : μ.inner_corner)
+  (i j : ℕ) : T.del c i j = ite ((i, j) = (c.i, c.j)) 0 (T i j) := rfl
+
+lemma ssyt.del_entry_eq_of_ne_row {μ : young_diagram} (T : ssyt μ) 
+  {c : μ.inner_corner} {i j : ℕ} (hi : i ≠ c.i) : 
+T.del c i j = T i j :=
+begin
+  rw [T.del_entry, if_neg], rintro ⟨⟩, exact hi rfl,
+end
+
+def ssyt.legal_of_del {μ : young_diagram} (T : ssyt μ) (c : μ.inner_corner) :
+  (T.del c).legal :=
+{ i := c.i, j := c.j, val := T c.i c.j,
+  cell_left := λ j' hj', c.mem_del.mpr 
+                  ⟨λ h, ne_of_lt hj' (prod.mk.inj_left c.i h),
+                   μ.nw_of (by refl) (le_of_lt hj') c.cell⟩,
+  cell_up := λ i' hi', c.mem_del.mpr
+                ⟨λ h, ne_of_lt hi' (prod.mk.inj_right c.j h),
+                 μ.nw_of (le_of_lt hi') (by refl) c.cell⟩,
+  left := λ j' hj', begin
+    rw ssyt.del_entry, split_ifs, apply nat.zero_le,
+    exact T.row_weak hj' c.cell,
+  end,
+  right := λ j' hj' cell', begin
+    rw c.mem_del at cell',
+    exact false.rec _ (c.cell_right hj' cell'.2),
+  end,
+  up := λ i' hi', begin
+    rw T.del_entry_eq_of_ne_row (ne_of_lt hi'), exact T.col_strict hi' c.cell,
+  end,
+  down := λ i' hi' cell', begin
+    rw c.mem_del at cell',
+    exact false.rec _ (c.cell_down hi' cell'.2),
+  end,
+}
+
+end delete_entry
+
 end legal_replace_add
 
 section weight

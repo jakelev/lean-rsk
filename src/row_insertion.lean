@@ -7,7 +7,7 @@ Defining "row_bump_step": one step of row insertion
 
 Given an ssyt T and natural numbers i, k, we "bump" k into row i
 while preserving semistandardness. In particular k goes after any existing k's
-and either replaces the leftmost k+1, or if there are no entries > k, it is
+and either replaces the leftmost larger entry, or if there are no entries > k, it is
 added at the end of the row.
 
 An assumption is necessary (to preserve column strictness) for this to be legal.
@@ -278,7 +278,7 @@ lemma ssyt.rbs_cert.rbs_entry_eq_of_ne_row {μ : young_diagram} {T : ssyt μ}
   (h : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) {i j : ℕ} (h_ne : i ≠ h.i) :
 h.rbs cell i j = T i j := 
 begin
-  rw [h.rbs_entry, if_neg], rintro ⟨rfl, _⟩, exact h_ne rfl
+  rw [h.rbs_entry, if_neg], rintro ⟨⟩, exact h_ne rfl
 end
 
 lemma ssyt.rbs_cert.rbs_end_entry_eq_of_ne_row {μ : young_diagram} {T : ssyt μ} 
