@@ -262,6 +262,30 @@ def ssyt.irbs_cert.next_cert {μ : young_diagram} {T : ssyt μ} (h : T.irbs_cert
 -- what is the correct "lexicographic" fact here?
 -- (the inverse fact to [row_insertion.lean/ssyt.rbs_cert.rbc_lt_rbc] ?)
 
+-- if we inverse-bump a second corner west of the first one, the resulting out-value
+-- is ≤ the first one
+
+-- intermediate stage: if we inverse-bump in the same row with a value k' s.t.
+-- k' ≤ k, then j' < j and out' ≤ out
+
+lemma ssyt.irbs_cert.irbc_lt_irbc {μ : young_diagram} {T : ssyt μ} 
+  (h : T.irbs_cert) (h' : h.irbs.irbs_cert)
+  (hi : h'.i = h.i) (hval : h'.val ≤ h.val) :
+  h'.j < h.j :=
+begin
+  rw ssyt.irbc_lt_iff, intro _, rwa [hi, h.irbs_entry, if_pos rfl],
+end
+
+lemma ssyt.irbs_cert.irbc_out_le_irbc_out {μ : young_diagram} {T : ssyt μ} 
+  (h : T.irbs_cert) (h' : h.irbs.irbs_cert)
+  (hi : h'.i = h.i) (hval : h'.val ≤ h.val) :
+  h'.out ≤ h.out :=
+begin
+  have hj : h'.j < h.j := h.irbc_lt_irbc h' hi hval,
+  rw [ssyt.irbs_cert.out, h.irbs_entry, hi, if_neg],
+  exact T.row_weak hj h.cell,
+  exact λ h, (ne_of_lt hj) (prod.mk.inj_left _ h),
+end
 
 end irbs
 
