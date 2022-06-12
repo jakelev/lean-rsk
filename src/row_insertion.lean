@@ -60,8 +60,8 @@ Finally, auxiliary facts are shown about the size and weight of the tableau.
 section row_bump_column
 
 lemma ssyt.rbc_aux {μ : young_diagram} (T : ssyt μ) (i val : ℕ) :
-  ∃ j, (i, j) ∉ μ ∨ val < T i j :=
-exists_or_distrib.mpr $ or.inl $ μ.row_len_aux i
+  ∃ j, (i, j) ∈ μ → val < T i j :=
+by { obtain ⟨j, hj⟩ := μ.row_len_aux i, use j }
 
 def ssyt.rbc {μ : young_diagram} (T : ssyt μ) (i val : ℕ) : ℕ :=
   nat.find $ T.rbc_aux i val
@@ -75,18 +75,18 @@ begin
 end
 
 lemma ssyt.rbc_le_iff {μ : young_diagram} (T : ssyt μ) {i j val: ℕ} :
-  T.rbc i val ≤ j ↔ (i, j) ∉ μ ∨ val < T i j :=
+  T.rbc i val ≤ j ↔ (i, j) ∈ μ → val < T i j :=
 begin
   rw ← not_iff_not, push_neg, apply ssyt.lt_rbc_iff
 end
 
 lemma ssyt.rbc_not_cell_or_val_lt {μ : young_diagram} (T : ssyt μ) (i val: ℕ) :
-  (i, T.rbc i val) ∉ μ ∨ val < T i (T.rbc i val) :=
+  (i, T.rbc i val) ∈ μ → val < T i (T.rbc i val) :=
 nat.find_spec (T.rbc_aux i val)
 
 lemma ssyt.rbc_eq_iff {μ : young_diagram} (T : ssyt μ) {i j val: ℕ} :
   T.rbc i val = j ↔
-  ((i, j) ∉ μ ∨ val < T i j) ∧ (∀ j' < j, (i, j') ∈ μ ∧ T i j' ≤ val) :=
+  ((i, j) ∈ μ → val < T i j) ∧ (∀ j' < j, (i, j') ∈ μ ∧ T i j' ≤ val) :=
 begin
   convert nat.find_eq_iff (T.rbc_aux i val), push_neg, refl,
 end
@@ -104,6 +104,56 @@ begin
   simp_rw [eq_cell, eq_row],
   rw ← T'.rbc_eq_iff,
 end
+
+-- section old_rbc
+
+-- lemma ssyt.rbc_aux {μ : young_diagram} (T : ssyt μ) (i val : ℕ) :
+--   ∃ j, (i, j) ∉ μ ∨ val < T i j :=
+-- exists_or_distrib.mpr $ or.inl $ μ.row_len_aux i
+
+-- def ssyt.rbc {μ : young_diagram} (T : ssyt μ) (i val : ℕ) : ℕ :=
+--   nat.find $ T.rbc_aux i val
+
+-- lemma ssyt.lt_rbc_iff {μ : young_diagram} (T : ssyt μ) {i j val: ℕ} :
+--   j < T.rbc i val ↔ (i, j) ∈ μ ∧ T i j ≤ val :=
+-- begin
+--   rw [ssyt.rbc, nat.lt_find_iff], push_neg,
+--   exact ⟨λ h, h _ (le_refl _),
+--          λ h _ hm, ⟨μ.nw_of (le_refl _) hm h.1, (T.row_weak' hm h.1).trans h.2⟩⟩
+-- end
+
+-- lemma ssyt.rbc_le_iff {μ : young_diagram} (T : ssyt μ) {i j val: ℕ} :
+--   T.rbc i val ≤ j ↔ (i, j) ∉ μ ∨ val < T i j :=
+-- begin
+--   rw ← not_iff_not, push_neg, apply ssyt.lt_rbc_iff
+-- end
+
+-- lemma ssyt.rbc_not_cell_or_val_lt {μ : young_diagram} (T : ssyt μ) (i val: ℕ) :
+--   (i, T.rbc i val) ∉ μ ∨ val < T i (T.rbc i val) :=
+-- nat.find_spec (T.rbc_aux i val)
+
+-- lemma ssyt.rbc_eq_iff {μ : young_diagram} (T : ssyt μ) {i j val: ℕ} :
+--   T.rbc i val = j ↔
+--   ((i, j) ∉ μ ∨ val < T i j) ∧ (∀ j' < j, (i, j') ∈ μ ∧ T i j' ≤ val) :=
+-- begin
+--   convert nat.find_eq_iff (T.rbc_aux i val), push_neg, refl,
+-- end
+
+-- lemma ssyt.rbc_eq_of_eq_row 
+--   {μ ν : young_diagram} (T : ssyt μ) (T' : ssyt ν) {i val : ℕ}
+--   (eq_cell : ∀ {j}, (i, j) ∈ μ ↔ (i, j) ∈ ν)
+--   (eq_row : ∀ {j}, T i j = T' i j) :
+--   T.rbc i val = T'.rbc i val :=
+-- begin
+--   rw T.rbc_eq_iff,
+--   -- change first statement
+--   rw [eq_cell, eq_row],
+--   -- change second statement
+--   simp_rw [eq_cell, eq_row],
+--   rw ← T'.rbc_eq_iff,
+-- end
+
+-- end old_rbc
 
 end row_bump_column
 
@@ -131,6 +181,11 @@ def ssyt.rbs_cert.j {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) : ℕ :=
 def ssyt.rbs_cert.out {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) : ℕ :=
   T h.i h.j
 
+lemma ssyt.rbs_cert.out_lt_val
+  {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
+  (cell : (h.i, h.j) ∈ μ) : h.val < h.out :=
+T.rbc_not_cell_or_val_lt _ _ cell
+
 @[simps]
 def ssyt.rbs_cert.legal_of_cert {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) : 
   T.legal :=
@@ -141,12 +196,12 @@ def ssyt.rbs_cert.legal_of_cert {μ : young_diagram} {T : ssyt μ} (h : T.rbs_ce
   cell_left := λ j' hj', (T.lt_rbc_iff.mp hj').1,
   left := λ j' hj', (T.lt_rbc_iff.mp hj').2,
   right := λ j' hj' hcell',
-    le_of_lt $ (T.rbc_le_iff.mp (le_of_lt hj')).resolve_left (λ h, h hcell'),
+    le_of_lt $ T.rbc_le_iff.mp (le_of_lt hj') hcell',
   up := h.up,
   down := λ i' hi' hcell', begin
-    apply ((T.rbc_not_cell_or_val_lt h.i h.val).resolve_left _).trans,
+    apply (h.out_lt_val _).trans,
     exact T.col_strict hi' hcell',
-    rw not_not, exact μ.nw_of (le_of_lt hi') (by refl) hcell',
+    exact μ.nw_of (le_of_lt hi') (by refl) hcell',
   end,
 }
 
@@ -294,7 +349,7 @@ h.rbs cell i j ≤ T i j :=
 begin
   rw h.rbs_entry, split_ifs,
   cases h_1,
-  exact le_of_lt ((T.rbc_not_cell_or_val_lt _ _).resolve_left (λ h, h cell)),
+  exact le_of_lt (h.out_lt_val cell),
   refl
 end
 
@@ -302,8 +357,7 @@ lemma ssyt.rbs_cert.next_rbc_le {μ : young_diagram} {T : ssyt μ}
   (h : T.rbs_cert) (cell : (h.i, h.j) ∈ μ) :
  (h.rbs cell).rbc h.i.succ h.out ≤ h.j :=
 begin
-  rw [ssyt.rbc_le_iff, or_iff_not_imp_left], push_neg,
-  intro cell',
+  rw ssyt.rbc_le_iff, intro cell',
   rw [h.rbs_entry_eq_of_ne_row _ (nat.succ_ne_self _)],
   apply T.col_strict (lt_add_one _) cell',
 end
@@ -327,16 +381,15 @@ begin
   rw nat.lt_succ_iff at hi',
   rw h.rbs_entry,
   split_ifs,
-  { exact (T.rbc_not_cell_or_val_lt _ _).resolve_left (λ h, h cell) },
+  { exact h.out_lt_val cell },
     cases lt_or_eq_of_le hi',
     { apply lt_of_lt_of_le (T.col_strict h_2 _) 
             (T.row_weak' (h.next_rbc_le cell) cell),
       exact μ.nw_of (le_refl _) (h.next_rbc_le cell) cell },
     { subst i', rw [prod.mk.inj_iff, eq_self_iff_true, true_and] at h_1,
-      apply @lt_of_le_of_lt _ _ _ h.val _,
+      apply lt_of_le_of_lt _ (h.out_lt_val cell),
       apply (T.lt_rbc_iff.mp _).2,
-      exact lt_of_le_of_ne (h.next_rbc_le cell) h_1,
-      exact (T.rbc_not_cell_or_val_lt _ _).resolve_left (λ h, h cell) }
+      exact lt_of_le_of_ne (h.next_rbc_le cell) h_1 }
 end
 
 @[simps]

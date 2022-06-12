@@ -111,6 +111,21 @@ begin
   rw ← T'.irbc_eq_iff,
 end
 
+lemma ssyt.irbc_eq_of_eq_row'
+  {μ ν : young_diagram} (T : ssyt μ) (T' : ssyt ν) {i val i' val' : ℕ}
+  (eq_cell : ∀ {j}, (i, j) ∈ μ ↔ (i, j) ∈ ν)
+  (eq_row : ∀ {j}, T i j = T' i j)
+  (exists_lt : ∃ j, (i, j) ∈ μ ∧ T i j < val)
+  (exists_lt' : ∃ j, (i', j) ∈ ν ∧ T' i' j < val')
+  (hi : i' = i) (hval : val' = val) :
+  T.irbc exists_lt = T'.irbc exists_lt' :=
+begin
+  rw T.irbc_eq_iff,
+  simp_rw [eq_cell, eq_row, ← hi, ← hval],
+  rw ← T'.irbc_eq_iff,
+end
+
+
 end inverse_row_bump_column
 
 section inverse_row_bump_step
@@ -239,6 +254,7 @@ begin
   all_goals {exact nat.pred_lt hi_pos},
 end
 
+@[simps]
 def ssyt.irbs_cert.next_cert {μ : young_diagram} {T : ssyt μ} (h : T.irbs_cert)
   (hi_pos : h.i ≠ 0) : h.irbs.irbs_cert :=
 { i := h.i.pred,

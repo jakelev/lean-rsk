@@ -51,6 +51,19 @@ instance ssyt.to_fun {μ : young_diagram} :
   has_coe_to_fun (ssyt μ) (λ T, ℕ → ℕ → ℕ) :=
 { coe := λ T i j, T.entry i j }
 
+lemma ssyt.to_entry {μ : young_diagram} (T : ssyt μ) (i j : ℕ) :
+  T.entry i j = T i j := rfl
+
+def ssyt.copy {μ ν : young_diagram} (T : ssyt μ) (h_eq : μ = ν) : 
+ssyt ν :=
+{ entry := T.entry,
+  row_weak := h_eq ▸ T.row_weak,
+  col_strict := h_eq ▸ T.col_strict,
+  zeros' := h_eq ▸ T.zeros' }
+  
+lemma ssyt.copy_entry {μ ν : young_diagram} (T : ssyt μ) {h_eq : μ = ν} 
+  {i j : ℕ} : T.copy h_eq i j = T i j := rfl
+
 lemma ssyt.zeros {μ : young_diagram} (T : ssyt μ) 
   {i j : ℕ} (not_cell : (i, j) ∉ μ) : T i j = 0 := T.zeros' not_cell
 

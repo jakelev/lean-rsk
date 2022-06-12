@@ -97,6 +97,22 @@ h.rbwf.2.wt val = T.wt val + ite (val = h.val) 1 0
   end)
 using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
 
+lemma ssyt.rbs_cert.i_le_rbwf_corner {μ : young_diagram} :
+Π {T : ssyt μ} (h : T.rbs_cert), h.i ≤ h.rbwf.1.i
+| T h := dite ((h.i, h.j) ∈ μ)
+  (λ cell, 
+    have wf : (h.next_cert cell).bound < h.bound := h.bound_decr cell,
+    begin
+      rw h.rbwf_of_cell cell,
+      apply le_trans _ (ssyt.rbs_cert.i_le_rbwf_corner _),
+      exact h.i.le_succ,
+    end)
+  (λ not_cell, begin
+    rw h.rbwf_of_not_cell not_cell, refl,
+  end)
+using_well_founded { rel_tac := λ _ _, `[exact ⟨_, measure_wf (λ x, x.2.bound)⟩] }
+
+
 lemma ssyt.rbs_cert.rbwf_shape_eq_self_lt_initial_row {μ : young_diagram} :
 Π {T : ssyt μ} (h : T.rbs_cert) (i j : ℕ) (hi : i < h.i), 
   (i, j) ∈ h.rbwf.1.add ↔ (i, j) ∈ μ
