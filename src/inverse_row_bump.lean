@@ -308,14 +308,14 @@ def ssyt.irbs_cert.irb_inductive' :
   Σ' (T : ssyt μ) (h : T.irbs_cert), h.i = end_before
 | μ T h end_before 0 hi := ⟨T, h, hi⟩
 | μ T h end_before (nat.succ n) hi :=
-let out := (h.irb_inductive'
-    (hi.trans (end_before.succ_add_eq_succ_add n).symm)) in
-  ⟨_, 
-   out.2.1.next_cert (by { rw out.2.2, apply nat.succ_ne_zero }),
-   by {
-     convert end_before.pred_succ,
-     rw [ssyt.irbs_cert.next_cert_i, out.2.2],
-   }⟩
+have hii : h.i = end_before.succ + n :=
+  (hi.trans (end_before.succ_add_eq_succ_add n).symm),
+⟨_,
+ (h.irb_inductive' hii).2.1.next_cert (by { rw (h.irb_inductive' hii).2.2, apply nat.succ_ne_zero }),
+ by {
+   convert end_before.pred_succ,
+   rw [ssyt.irbs_cert.next_cert_i, (h.irb_inductive' hii).2.2],
+ }⟩
 
 lemma ssyt.irbs_cert.irb_inductive'_row_zero
   {μ : young_diagram} {T : ssyt μ} (h : T.irbs_cert)

@@ -181,7 +181,7 @@ def ssyt.rbs_cert.j {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) : ℕ :=
 def ssyt.rbs_cert.out {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert) : ℕ :=
   T h.i h.j
 
-lemma ssyt.rbs_cert.out_lt_val
+lemma ssyt.rbs_cert.val_lt_out
   {μ : young_diagram} {T : ssyt μ} (h : T.rbs_cert)
   (cell : (h.i, h.j) ∈ μ) : h.val < h.out :=
 T.rbc_not_cell_or_val_lt _ _ cell
@@ -199,7 +199,7 @@ def ssyt.rbs_cert.legal_of_cert {μ : young_diagram} {T : ssyt μ} (h : T.rbs_ce
     le_of_lt $ T.rbc_le_iff.mp (le_of_lt hj') hcell',
   up := h.up,
   down := λ i' hi' hcell', begin
-    apply (h.out_lt_val _).trans,
+    apply (h.val_lt_out _).trans,
     exact T.col_strict hi' hcell',
     exact μ.nw_of (le_of_lt hi') (by refl) hcell',
   end,
@@ -349,7 +349,7 @@ h.rbs cell i j ≤ T i j :=
 begin
   rw h.rbs_entry, split_ifs,
   cases h_1,
-  exact le_of_lt (h.out_lt_val cell),
+  exact le_of_lt (h.val_lt_out cell),
   refl
 end
 
@@ -380,16 +380,16 @@ begin
   intros j' i' hi',
   rw nat.lt_succ_iff at hi',
   rw h.rbs_entry,
-  split_ifs,
-  { exact h.out_lt_val cell },
+  split_ifs with h1,
+  { exact h.val_lt_out cell },
     cases lt_or_eq_of_le hi',
-    { apply lt_of_lt_of_le (T.col_strict h_2 _) 
-            (T.row_weak' (h.next_rbc_le cell) cell),
+    { calc T i' j' < T h.i j'  : T.col_strict ‹i' < h.i› _
+      ...          ≤ T h.i h.j : T.row_weak' (h.next_rbc_le cell) cell,
       exact μ.nw_of (le_refl _) (h.next_rbc_le cell) cell },
-    { subst i', rw [prod.mk.inj_iff, eq_self_iff_true, true_and] at h_1,
-      apply lt_of_le_of_lt _ (h.out_lt_val cell),
-      apply (T.lt_rbc_iff.mp _).2,
-      exact lt_of_le_of_ne (h.next_rbc_le cell) h_1 }
+    { subst i', rw [prod.mk.inj_iff, eq_self_iff_true, true_and] at h1,
+      calc T h.i j' ≤ h.val : (T.lt_rbc_iff.mp _).2
+      ...           < h.out : h.val_lt_out cell,
+      exact lt_of_le_of_ne (h.next_rbc_le cell) ‹j' ≠ h.j› }
 end
 
 @[simps]
