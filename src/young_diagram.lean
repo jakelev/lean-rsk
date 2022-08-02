@@ -1,9 +1,14 @@
+/-
+Copyright (c) 2022 Jake Levinson. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jake Levinson
+-/
+
 import tactic
 import data.set.basic
 
-/-
-
-Young diagrams
+/-!
+# Young diagrams
 
 A Young diagram is a finite set of up-left justified boxes:
 
@@ -13,16 +18,26 @@ A Young diagram is a finite set of up-left justified boxes:
 □□□
 □
 
-This file contains:
+Equivalently, a lower set in ℕ × ℕ in the product partial order.
+
+## Main functions:
+
   - basic properties and definitions involving shape, size, row and column
     lengths, and corners of a Young diagram
-  - various constructors:
+
+  - [TODO] various constructors:
       [young_diagram.has_empty]
       [young_diagram.of_row_lens]
       [young_diagram.outer_corner.add]
       [young_diagram.inner_corner.del]
-  - TODO: young_diagram.equiv_list_decr : 
-      young_diagram ≃ {r : list ℕ // list_decr r}
+
+## Tags
+
+Young diagram
+
+## References
+
+<https://en.wikipedia.org/wiki/Young_tableau>
 
 -/
 
@@ -37,6 +52,7 @@ structure young_diagram :=
 instance young_diagram.has_mem : has_mem (ℕ × ℕ) young_diagram :=
 { mem := λ c μ, c ∈ μ.cells, }
 
+@[simp]
 lemma young_diagram.mem_cells (μ : young_diagram) (c : ℕ × ℕ) :
   c ∈ μ.cells ↔ c ∈ μ := iff.rfl
 
@@ -490,6 +506,97 @@ def μ5331.corner3 : μ5331.outer_corner :=
 #eval μ5331.corner2.del
 
 #eval μ5331.corner3.add
+
+-- lemma list.inth_of_repeat {α : Type} [inhabited α] 
+--   (a : α) {n i : ℕ} (h : i < n) :
+--   (list.repeat a n).inth i = a :=
+-- begin
+--   induction n with n ih_n generalizing i,
+--   exfalso, exact not_le_of_lt h (zero_le _),
+--   cases i, refl,
+--   exact ih_n (nat.succ_lt_succ_iff.mp h),
+-- end
+
+-- lemma list.inth_of_repeat_ge_length {α : Type} [inhabited α] 
+--   (a : α) {n i : ℕ} (h : n ≤ i) :
+--   (list.repeat a n).inth i = default :=
+-- begin
+--   induction n with n ih_n generalizing i,
+--   refl, cases i,
+--   exfalso, exact not_lt_of_le h (nat.succ_pos _),
+--   exact ih_n (nat.succ_le_succ_iff.mp h),
+-- end
+
+-- def rectangle_shape (m n : ℕ) : young_diagram :=
+--   young_diagram.of_row_lens (list.repeat m n)
+-- begin
+--   rw list_decr_iff,
+--   intros i j hij,
+--   cases lt_or_ge j n,
+--   rw [list.inth_of_repeat _ h,
+--       list.inth_of_repeat _ (hij.trans_lt h)],
+--   rw list.inth_of_repeat_ge_length _ h,
+--   exact nat.zero_le _,
+-- end
+
+def rectangle_shape (m n : ℕ) : young_diagram :=
+{ cells := (finset.range m).product (finset.range n),
+  nw_of' := λ i1 i2 j1 j2 hi hj h_cell,
+  begin
+    simp only [finset.mem_range, finset.mem_product] at ⊢ h_cell,
+    exact ⟨hi.trans_lt h_cell.1, hj.trans_lt h_cell.2⟩,
+  end, }
+
+lemma rectangle_shape.cells_def {m n : ℕ} :
+  (rectangle_shape m n).cells = 
+  (finset.range m).product (finset.range n) := rfl
+
+lemma rectangle_shape.mem_iff {m n : ℕ} (i j : ℕ) :
+  (i, j) ∈ rectangle_shape m n ↔ i < m ∧ j < n :=
+begin
+  change (i, j) ∈ finset.product _ _ ↔ _, simp,
+end
+
+lemma rectangle_shape.row_len {m n : ℕ} {r : ℕ} :
+  (rectangle_shape m n).row_len r = ite (r < m) n 0 :=
+begin
+  simp_rw [young_diagram.row_len_def, nat.find_eq_iff,
+           rectangle_shape.mem_iff],
+  split; push_neg,
+  { intro h, rw if_pos h, },
+  { intros i hi,
+    split_ifs at hi,
+    exact ⟨h, hi⟩, exact false.rec _ (i.not_lt_zero hi), },
+end
+
+lemma rectangle_shape.col_len {m n : ℕ} (c : ℕ) :
+  (rectangle_shape m n).col_len c = ite (c < n) m 0 :=
+begin
+  simp_rw [young_diagram.col_len_def, nat.find_eq_iff,
+           rectangle_shape.mem_iff],
+  split,
+  { rw not_and', intro h, rw if_pos h, simp, },
+  { intros i hi, push_neg,
+    split_ifs at hi,
+    exact ⟨hi, h⟩, exact false.rec _ (i.not_lt_zero hi), },
+end
+
+lemma rectangle_shape.row_lens {m n : ℕ} (hn : 0 < n) :
+  (rectangle_shape m n).row_lens = list.repeat n m :=
+begin
+  change list.map _ _ = _,
+  rw [rectangle_shape.col_len, if_pos hn],
+  apply list.ext, intro r,
+  cases le_or_gt m r,
+  { repeat {rw list.nth_eq_none_iff.mpr},
+    rw list.length_repeat, exact h,
+    rw [list.length_map, list.length_range], exact h, },
+  rw [list.nth_map, list.nth_range h, option.map_some',
+      rectangle_shape.row_len, if_pos h, list.nth_eq_some.mpr],
+  simp_rw list.length_repeat, use h,
+  rw list.nth_le_repeat,
+end
+
 
 end examples
 
