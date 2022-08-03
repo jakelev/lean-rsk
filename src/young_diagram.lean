@@ -25,11 +25,13 @@ Equivalently, a lower set in ℕ × ℕ in the product partial order.
   - basic properties and definitions involving shape, size, row and column
     lengths, and corners of a Young diagram
 
-  - [TODO] various constructors:
+  - various constructors:
       [young_diagram.has_empty]
       [young_diagram.of_row_lens]
       [young_diagram.outer_corner.add]
       [young_diagram.inner_corner.del]
+  
+  - TODO: young_diagram ≃ { l : list ℕ // l.sorted (≤) }
 
 ## Tags
 
@@ -185,8 +187,6 @@ section μ_empty
 
 instance young_diagram.has_emptyc : has_emptyc young_diagram :=
 { emptyc := { cells := finset.empty, nw_of' := λ _ _ _ _ _ _ h, h, } }
-
-def μ_empty := (∅ : young_diagram)
 
 @[simp] lemma μ_empty_size : (∅ : young_diagram).size = 0 := rfl
 
